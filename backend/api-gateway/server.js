@@ -35,17 +35,44 @@ let redisClient;
 })();
 
 // Middleware
-app.use(helmet({
-  crossOriginResourcePolicy: { policy: "cross-origin" }
-}));
+// CORS - Allow Vercel frontend and handle preflight requests FIRST
+const allowedOrigins = [
+  'https://smarteats25-customer-app.vercel.app',
+  'https://smarteats-customer-app.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
 
-// CORS - Allow all origins for demo/development
-const corsOrigins = process.env.CORS_ORIGIN?.split(',') || ['*'];
-app.use(cors({
-  origin: corsOrigins.includes('*') ? true : corsOrigins,
+// Handle preflight OPTIONS requests
+app.options('*', cors({
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, etc.)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    // Allow any vercel.app subdomain
+    if (origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    return callback(null, true); // Allow all for demo
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+}));
+
+// Helmet security headers (after CORS)
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginOpenerPolicy: { policy: "unsafe-none" }
 }));
 
 app.use(express.json());
