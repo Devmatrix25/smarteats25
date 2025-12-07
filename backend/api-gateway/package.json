@@ -5,6 +5,7 @@
   "private": true,
   "workspaces": [
     "apps/*",
+    "backend/api-gateway",
     "backend/services/*",
     "backend/sockets",
     "backend/queue"
