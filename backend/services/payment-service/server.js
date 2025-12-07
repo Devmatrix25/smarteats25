@@ -7,7 +7,7 @@ import paymentRoutes from './routes/payments.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PAYMENT_SERVICE_PORT || 4005;
+const PORT = process.env.PORT || process.env.PAYMENT_SERVICE_PORT || 4005;
 
 app.use(cors());
 app.use(express.json());

@@ -7,7 +7,7 @@ import restaurantRoutes from './routes/restaurants.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.RESTAURANT_SERVICE_PORT || 4003;
+const PORT = process.env.PORT || process.env.RESTAURANT_SERVICE_PORT || 4003;
 
 // Middleware
 app.use(cors());

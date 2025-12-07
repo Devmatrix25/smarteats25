@@ -7,7 +7,7 @@ import deliveryRoutes from './routes/delivery.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.DELIVERY_SERVICE_PORT || 4004;
+const PORT = process.env.PORT || process.env.DELIVERY_SERVICE_PORT || 4004;
 
 app.use(cors());
 app.use(express.json());

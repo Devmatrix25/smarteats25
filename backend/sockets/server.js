@@ -6,7 +6,7 @@ import { createClient } from 'redis';
 
 dotenv.config();
 
-const PORT = process.env.WS_PORT || 4100;
+const PORT = process.env.PORT || process.env.WS_PORT || 4100;
 
 // Create HTTP server
 const httpServer = createServer();

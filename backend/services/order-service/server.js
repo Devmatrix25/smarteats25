@@ -7,7 +7,7 @@ import orderRoutes from './routes/orders.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.ORDER_SERVICE_PORT || 4002;
+const PORT = process.env.PORT || process.env.ORDER_SERVICE_PORT || 4002;
 
 // Middleware
 app.use(cors());
