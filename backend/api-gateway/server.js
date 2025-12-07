@@ -144,6 +144,9 @@ console.log('DEBUG: Services config:', services);
 const proxyOptions = {
   changeOrigin: true,
   logLevel: 'debug',
+  secure: true,
+  timeout: 60000, // 60 second timeout for cold start
+  proxyTimeout: 60000,
   onProxyReq: (proxyReq, req, res) => {
     if (req.user) {
       proxyReq.setHeader('X-User-Id', req.user.userId);
