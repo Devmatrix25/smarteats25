@@ -37,6 +37,7 @@ let redisClient;
 // Middleware
 // CORS - Allow Vercel frontend and handle preflight requests FIRST
 const allowedOrigins = [
+  'https://smarteats25.vercel.app',
   'https://smarteats25-customer-app.vercel.app',
   'https://smarteats-customer-app.vercel.app',
   'http://localhost:5173',
