@@ -95,7 +95,6 @@ export const AuthProvider = ({ children }) => {
         loading,
         register,
         login,
-        login,
         loginWithGoogle,
         loginAsDemo,
         logout,
