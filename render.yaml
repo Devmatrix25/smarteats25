@@ -17,7 +17,7 @@ services:
     runtime: node
     region: oregon
     plan: free
-    buildCommand: cd backend/api-gateway && npm install
+    buildCommand: npm install --prefix backend/api-gateway
     startCommand: cd backend/api-gateway && node server.js
     healthCheckPath: /health
     envVars:
