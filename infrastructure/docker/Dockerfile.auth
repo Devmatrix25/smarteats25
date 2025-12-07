@@ -1,0 +1,13 @@
+# Auth Service Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY backend/services/auth-service/package*.json ./
+RUN npm install
+
+COPY backend/services/auth-service/ ./
+
+EXPOSE 4001
+
+CMD ["node", "server.js"]

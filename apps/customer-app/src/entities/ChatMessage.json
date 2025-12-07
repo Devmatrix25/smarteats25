@@ -1,0 +1,38 @@
+{
+  "name": "ChatMessage",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User email"
+    },
+    "conversation_id": {
+      "type": "string",
+      "description": "Conversation ID"
+    },
+    "role": {
+      "type": "string",
+      "enum": [
+        "user",
+        "assistant"
+      ],
+      "description": "Message role"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message content"
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "AI recommendations"
+    }
+  },
+  "required": [
+    "user_email",
+    "role",
+    "content"
+  ]
+}

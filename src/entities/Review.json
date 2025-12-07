@@ -1,0 +1,78 @@
+{
+  "name": "Review",
+  "type": "object",
+  "properties": {
+    "order_id": {
+      "type": "string",
+      "description": "Order ID"
+    },
+    "restaurant_id": {
+      "type": "string",
+      "description": "Restaurant ID"
+    },
+    "driver_id": {
+      "type": "string",
+      "description": "Driver ID"
+    },
+    "customer_email": {
+      "type": "string",
+      "description": "Customer email"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Customer name"
+    },
+    "overall_rating": {
+      "type": "number",
+      "description": "Overall rating 1-5"
+    },
+    "food_rating": {
+      "type": "number",
+      "description": "Food quality rating 1-5"
+    },
+    "delivery_rating": {
+      "type": "number",
+      "description": "Delivery time rating 1-5"
+    },
+    "driver_rating": {
+      "type": "number",
+      "description": "Driver professionalism rating 1-5"
+    },
+    "packaging_rating": {
+      "type": "number",
+      "description": "Packaging quality rating 1-5"
+    },
+    "review_text": {
+      "type": "string",
+      "description": "Written review"
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Review images"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Quick feedback tags"
+    },
+    "restaurant_reply": {
+      "type": "string",
+      "description": "Restaurant's reply"
+    },
+    "is_verified": {
+      "type": "boolean",
+      "default": true,
+      "description": "Verified purchase"
+    }
+  },
+  "required": [
+    "order_id",
+    "customer_email",
+    "overall_rating"
+  ]
+}

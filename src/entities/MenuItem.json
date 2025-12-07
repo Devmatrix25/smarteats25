@@ -1,0 +1,144 @@
+{
+  "name": "MenuItem",
+  "type": "object",
+  "properties": {
+    "restaurant_id": {
+      "type": "string",
+      "description": "Restaurant ID"
+    },
+    "name": {
+      "type": "string",
+      "description": "Dish name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Dish description"
+    },
+    "price": {
+      "type": "number",
+      "description": "Base price in INR"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Dish image"
+    },
+    "category": {
+      "type": "string",
+      "description": "Category (Starters, Main Course, etc.)"
+    },
+    "is_vegetarian": {
+      "type": "boolean",
+      "default": false,
+      "description": "Vegetarian item"
+    },
+    "is_vegan": {
+      "type": "boolean",
+      "default": false,
+      "description": "Vegan item"
+    },
+    "is_bestseller": {
+      "type": "boolean",
+      "default": false,
+      "description": "Bestseller item"
+    },
+    "is_recommended": {
+      "type": "boolean",
+      "default": false,
+      "description": "Chef's recommendation"
+    },
+    "is_special_offer": {
+      "type": "boolean",
+      "default": false,
+      "description": "Special offer/discount item"
+    },
+    "offer_price": {
+      "type": "number",
+      "description": "Discounted price for special offers"
+    },
+    "offer_label": {
+      "type": "string",
+      "description": "Special offer label (e.g., '20% OFF', 'Buy 1 Get 1')"
+    },
+    "is_available": {
+      "type": "boolean",
+      "default": true,
+      "description": "Currently available"
+    },
+    "spice_level": {
+      "type": "string",
+      "enum": [
+        "mild",
+        "medium",
+        "hot",
+        "extra_hot"
+      ],
+      "description": "Spice level"
+    },
+    "preparation_time_mins": {
+      "type": "number",
+      "default": 15,
+      "description": "Preparation time"
+    },
+    "calories": {
+      "type": "number",
+      "description": "Calorie count"
+    },
+    "allergens": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Allergen info"
+    },
+    "sizes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Size variations with prices"
+    },
+    "toppings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Available toppings with prices"
+    },
+    "customizations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          }
+        }
+      },
+      "description": "Other customization options"
+    }
+  },
+  "required": [
+    "restaurant_id",
+    "name",
+    "price"
+  ]
+}

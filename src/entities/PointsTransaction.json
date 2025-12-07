@@ -1,0 +1,37 @@
+{
+  "name": "PointsTransaction",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Customer email"
+    },
+    "order_id": {
+      "type": "string",
+      "description": "Related order ID"
+    },
+    "points": {
+      "type": "number",
+      "description": "Points amount (positive=earned, negative=redeemed)"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "earned",
+        "redeemed",
+        "bonus",
+        "expired"
+      ],
+      "description": "Transaction type"
+    },
+    "description": {
+      "type": "string",
+      "description": "Transaction description"
+    }
+  },
+  "required": [
+    "user_email",
+    "points",
+    "type"
+  ]
+}

@@ -1,0 +1,184 @@
+version: '3.8'
+
+services:
+  # ============== FRONTEND ==============
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smarteats-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    env_file:
+      - .env
+    networks:
+      - smarteats-network
+    depends_on:
+      - api-gateway
+    command: npm run dev:customer
+
+  # ============== API GATEWAY ==============
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: smarteats-api-gateway
+    ports:
+      - "4000:4000"
+    env_file:
+      - .env
+    networks:
+      - smarteats-network
+    depends_on:
+      - redis
+
+  # ============== AUTH SERVICE ==============
+  auth-service:
+    build:
+      context: ./backend/services/auth-service
+      dockerfile: Dockerfile
+    container_name: smarteats-auth
+    ports:
+      - "4001:4001"
+    env_file:
+      - .env
+    networks:
+      - smarteats-network
+
+  # ============== ORDER SERVICE ==============
+  order-service:
+    build:
+      context: ./backend/services/order-service
+      dockerfile: Dockerfile
+    container_name: smarteats-order
+    ports:
+      - "4002:4002"
+    env_file:
+      - .env
+    networks:
+      - smarteats-network
+
+  # ============== RESTAURANT SERVICE ==============
+  restaurant-service:
+    build:
+      context: ./backend/services/restaurant-service
+      dockerfile: Dockerfile
+    container_name: smarteats-restaurant
+    ports:
+      - "4003:4003"
+    env_file:
+      - .env
+    networks:
+      - smarteats-network
+
+  # ============== DELIVERY SERVICE ==============
+  delivery-service:
+    build:
+      context: ./backend/services/delivery-service
+      dockerfile: Dockerfile
+    container_name: smarteats-delivery
+    ports:
+      - "4004:4004"
+    env_file:
+      - .env
+    networks:
+      - smarteats-network
+
+  # ============== NOTIFICATION SERVICE ==============
+  notification-service:
+    build:
+      context: ./backend/services/notification-service
+      dockerfile: Dockerfile
+    container_name: smarteats-notification
+    ports:
+      - "4006:4006"
+    env_file:
+      - .env
+    networks:
+      - smarteats-network
+
+  # ============== WEBSOCKET SERVER ==============
+  websocket:
+    build:
+      context: ./backend/sockets
+      dockerfile: Dockerfile
+    container_name: smarteats-websocket
+    ports:
+      - "4100:4100"
+    env_file:
+      - .env
+    networks:
+      - smarteats-network
+
+  # ============== REDIS (Caching + Celery Broker) ==============
+  redis:
+    image: redis:7-alpine
+    container_name: smarteats-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - smarteats-network
+
+  # ============== CELERY WORKER (Python) ==============
+  celery-worker:
+    build:
+      context: ./backend/celery
+      dockerfile: Dockerfile
+    container_name: smarteats-celery
+    env_file:
+      - .env
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    depends_on:
+      - redis
+    networks:
+      - smarteats-network
+    command: celery -A tasks worker --loglevel=info
+
+  # ============== PROMETHEUS (Metrics) ==============
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: smarteats-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - smarteats-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+  # ============== GRAFANA (Dashboards) ==============
+  grafana:
+    image: grafana/grafana:10.0.3
+    container_name: smarteats-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=smarteats123
+    volumes:
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - smarteats-network
+
+networks:
+  smarteats-network:
+    driver: bridge
+
+volumes:
+  redis-data:
+  prometheus-data:
+  grafana-data:

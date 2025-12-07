@@ -1,0 +1,23 @@
+{
+    "name": "@smarteats/payment-service",
+    "version": "1.0.0",
+    "description": "SmartEats Payment Processing Service",
+    "type": "module",
+    "main": "server.js",
+    "scripts": {
+        "dev": "nodemon server.js",
+        "start": "node server.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "mongoose": "^8.0.3",
+        "dotenv": "^16.3.1",
+        "cors": "^2.8.5",
+        "stripe": "^14.10.0",
+        "amqplib": "^0.10.3",
+        "joi": "^17.11.0"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.2"
+    }
+}

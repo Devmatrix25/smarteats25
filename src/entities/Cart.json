@@ -1,0 +1,53 @@
+{
+  "name": "Cart",
+  "type": "object",
+  "properties": {
+    "customer_email": {
+      "type": "string",
+      "description": "Customer email"
+    },
+    "restaurant_id": {
+      "type": "string",
+      "description": "Restaurant ID"
+    },
+    "restaurant_name": {
+      "type": "string",
+      "description": "Restaurant name"
+    },
+    "items": {
+      "type": "array",
+      "description": "Cart items",
+      "items": {
+        "type": "object",
+        "properties": {
+          "menu_item_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "image_url": {
+            "type": "string"
+          },
+          "special_instructions": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "subtotal": {
+      "type": "number",
+      "default": 0,
+      "description": "Cart subtotal"
+    }
+  },
+  "required": [
+    "customer_email"
+  ]
+}

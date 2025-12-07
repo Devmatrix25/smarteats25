@@ -1,0 +1,17 @@
+# Delivery Service Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY backend/services/delivery-service/package*.json ./
+COPY backend/queue/package*.json ../queue/
+
+RUN npm install
+RUN cd ../queue && npm install
+
+COPY backend/services/delivery-service/ ./
+COPY backend/queue/ ../queue/
+
+EXPOSE 4004
+
+CMD ["node", "server.js"]

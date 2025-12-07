@@ -1,0 +1,28 @@
+{
+    "name": "@smarteats/auth-service",
+    "version": "1.0.0",
+    "description": "SmartEats Authentication Service",
+    "type": "module",
+    "main": "server.js",
+    "scripts": {
+        "dev": "nodemon server.js",
+        "start": "node server.js",
+        "test": "echo \"Tests not implemented yet\""
+    },
+    "dependencies": {
+        "express": "^4.18.2",
+        "mongoose": "^8.0.3",
+        "bcryptjs": "^2.4.3",
+        "jsonwebtoken": "^9.0.2",
+        "dotenv": "^16.3.1",
+        "cors": "^2.8.5",
+        "redis": "^4.6.12",
+        "joi": "^17.11.0",
+        "passport": "^0.7.0",
+        "passport-google-oauth20": "^2.0.0",
+        "express-validator": "^7.0.1"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.2"
+    }
+}

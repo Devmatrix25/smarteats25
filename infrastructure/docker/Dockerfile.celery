@@ -1,0 +1,11 @@
+# Celery Worker Dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY backend/celery-worker/requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY backend/celery-worker/ ./
+
+CMD ["celery", "-A", "celery_app", "worker", "--loglevel=info"]

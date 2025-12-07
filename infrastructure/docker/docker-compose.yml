@@ -1,0 +1,284 @@
+version: '3.8'
+
+services:
+  # ==============================================
+  # DATABASES & INFRASTRUCTURE
+  # ==============================================
+  
+  mongodb:
+    image: mongo:7.0
+    container_name: smarteats-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: smarteats
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - smarteats-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: smarteats-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - smarteats-network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: smarteats-rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - smarteats-network
+
+  # ==============================================
+  # BACKEND SERVICES
+  # ==============================================
+
+  api-gateway:
+    build:
+      context: ../../
+      dockerfile: ./infrastructure/docker/Dockerfile.gateway
+    container_name: smarteats-api-gateway
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    env_file:
+      - ../../.env
+    depends_on:
+      - redis
+      - auth-service
+      - order-service
+      - restaurant-service
+      - delivery-service
+      - payment-service
+      - notification-service
+    networks:
+      - smarteats-network
+
+  auth-service:
+    build:
+      context: ../../
+      dockerfile: ./infrastructure/docker/Dockerfile.auth
+    container_name: smarteats-auth-service
+    restart: unless-stopped
+    ports:
+      - "4001:4001"
+    env_file:
+      - ../../.env
+    depends_on:
+      - mongodb
+      - redis
+    networks:
+      - smarteats-network
+
+  order-service:
+    build:
+      context: ../../
+      dockerfile: ./infrastructure/docker/Dockerfile.order
+    container_name: smarteats-order-service
+    restart: unless-stopped
+    ports:
+      - "4002:4002"
+    env_file:
+      - ../../.env
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - smarteats-network
+
+  restaurant-service:
+    build:
+      context: ../../
+      dockerfile: ./infrastructure/docker/Dockerfile.restaurant
+    container_name: smarteats-restaurant-service
+    restart: unless-stopped
+    ports:
+      - "4003:4003"
+    env_file:
+      - ../../.env
+    depends_on:
+      - mongodb
+    networks:
+      - smarteats-network
+
+  delivery-service:
+    build:
+      context: ../../
+      dockerfile: ./infrastructure/docker/Dockerfile.delivery
+    container_name: smarteats-delivery-service
+    restart: unless-stopped
+    ports:
+      - "4004:4004"
+    env_file:
+      - ../../.env
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - smarteats-network
+
+  payment-service:
+    build:
+      context: ../../
+      dockerfile: ./infrastructure/docker/Dockerfile.payment
+    container_name: smarteats-payment-service
+    restart: unless-stopped
+    ports:
+      - "4005:4005"
+    env_file:
+      - ../../.env
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - smarteats-network
+
+  notification-service:
+    build:
+      context: ../../
+      dockerfile: ./infrastructure/docker/Dockerfile.notification
+    container_name: smarteats-notification-service
+    restart: unless-stopped
+    ports:
+      - "4006:4006"
+    env_file:
+      - ../../.env
+    depends_on:
+      - mongodb
+      - rabbitmq
+    networks:
+      - smarteats-network
+
+  websocket-server:
+    build:
+      context: ../../
+      dockerfile: ./infrastructure/docker/Dockerfile.websocket
+    container_name: smarteats-websocket
+    restart: unless-stopped
+    ports:
+      - "4100:4100"
+    env_file:
+      - ../../.env
+    depends_on:
+      - redis
+      - rabbitmq
+    networks:
+      - smarteats-network
+
+  # ==============================================
+  # CELERY WORKER (PYTHON)
+  # ==============================================
+
+  celery-worker:
+    build:
+      context: ../../
+      dockerfile: ./infrastructure/docker/Dockerfile.celery
+    container_name: smarteats-celery-worker
+    restart: unless-stopped
+    env_file:
+      - ../../.env
+    depends_on:
+      - rabbitmq
+      - redis
+    networks:
+      - smarteats-network
+
+  # ==============================================
+  # FRONTEND APPS (DEVELOPMENT MODE)
+  # ==============================================
+
+  customer-app:
+    build:
+      context: ../../
+      dockerfile: ./infrastructure/docker/Dockerfile.customer
+    container_name: smarteats-customer-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    env_file:
+      - ../../.env
+    volumes:
+      - ../../apps/customer-app:/app
+      - /app/node_modules
+    networks:
+      - smarteats-network
+
+  # restaurant-app:
+  #   build:
+  #     context: ../../
+  #     dockerfile: ./infrastructure/docker/Dockerfile.restaurant-app
+  #   container_name: smarteats-restaurant-app
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3001:3001"
+  #   env_file:
+  #     - ../../.env
+  #   volumes:
+  #     - ../../apps/restaurant-app:/app
+  #     - /app/node_modules
+  #   networks:
+  #     - smarteats-network
+
+  # delivery-app:
+  #   build:
+  #     context: ../../
+  #     dockerfile: ./infrastructure/docker/Dockerfile.delivery-app
+  #   container_name: smarteats-delivery-app
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3002:3002"
+  #   env_file:
+  #     - ../../.env
+  #   volumes:
+  #     - ../../apps/delivery-app:/app
+  #     - /app/node_modules
+  #   networks:
+  #     - smarteats-network
+
+  # admin-app:
+  #   build:
+  #     context: ../../
+  #     dockerfile: ./infrastructure/docker/Dockerfile.admin
+  #   container_name: smarteats-admin-app
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3003:3003"
+  #   env_file:
+  #     - ../../.env
+  #   volumes:
+  #     - ../../apps/admin-app:/app
+  #     - /app/node_modules
+  #   networks:
+  #     - smarteats-network
+
+# ==============================================
+# NETWORKS
+# ==============================================
+
+networks:
+  smarteats-network:
+    driver: bridge
+
+# ==============================================
+# VOLUMES
+# ==============================================
+
+volumes:
+  mongodb_data:
+  redis_data:
+  rabbitmq_data:

@@ -1,0 +1,121 @@
+{
+  "name": "Restaurant",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Restaurant name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description"
+    },
+    "cuisine_type": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Cuisine types (Indian, Chinese, etc.)"
+    },
+    "image_url": {
+      "type": "string",
+      "description": "Restaurant cover image"
+    },
+    "logo_url": {
+      "type": "string",
+      "description": "Restaurant logo"
+    },
+    "address": {
+      "type": "string",
+      "description": "Full address"
+    },
+    "city": {
+      "type": "string",
+      "description": "City name"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "Location latitude"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Location longitude"
+    },
+    "owner_email": {
+      "type": "string",
+      "description": "Owner's email"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Contact phone"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "suspended"
+      ],
+      "default": "pending",
+      "description": "Approval status"
+    },
+    "is_open": {
+      "type": "boolean",
+      "default": true,
+      "description": "Currently accepting orders"
+    },
+    "opening_time": {
+      "type": "string",
+      "description": "Opening time (HH:MM)"
+    },
+    "closing_time": {
+      "type": "string",
+      "description": "Closing time (HH:MM)"
+    },
+    "average_rating": {
+      "type": "number",
+      "default": 0,
+      "description": "Average customer rating"
+    },
+    "total_reviews": {
+      "type": "number",
+      "default": 0,
+      "description": "Total number of reviews"
+    },
+    "delivery_time_mins": {
+      "type": "number",
+      "default": 30,
+      "description": "Estimated delivery time"
+    },
+    "minimum_order": {
+      "type": "number",
+      "default": 0,
+      "description": "Minimum order amount"
+    },
+    "delivery_fee": {
+      "type": "number",
+      "default": 30,
+      "description": "Delivery fee in INR"
+    },
+    "is_featured": {
+      "type": "boolean",
+      "default": false,
+      "description": "Featured on homepage"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Admin who approved"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Approval timestamp"
+    }
+  },
+  "required": [
+    "name",
+    "address",
+    "owner_email"
+  ]
+}

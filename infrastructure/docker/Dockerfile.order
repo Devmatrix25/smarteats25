@@ -1,0 +1,17 @@
+# Order Service Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY backend/services/order-service/package*.json ./
+COPY backend/queue/package*.json ../queue/
+
+RUN npm install
+RUN cd ../queue && npm install
+
+COPY backend/services/order-service/ ./
+COPY backend/queue/ ../queue/
+
+EXPOSE 4002
+
+CMD ["node", "server.js"]

@@ -1,0 +1,60 @@
+{
+  "name": "Reward",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Reward name"
+    },
+    "description": {
+      "type": "string",
+      "description": "Reward description"
+    },
+    "points_required": {
+      "type": "number",
+      "description": "Points needed to redeem"
+    },
+    "reward_type": {
+      "type": "string",
+      "enum": [
+        "discount_percent",
+        "discount_flat",
+        "free_delivery",
+        "free_item"
+      ],
+      "description": "Type of reward"
+    },
+    "reward_value": {
+      "type": "number",
+      "description": "Discount percentage or flat amount"
+    },
+    "min_order_value": {
+      "type": "number",
+      "default": 0,
+      "description": "Minimum order value to use"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "tier_required": {
+      "type": "string",
+      "enum": [
+        "bronze",
+        "silver",
+        "gold",
+        "platinum"
+      ],
+      "default": "bronze"
+    },
+    "icon": {
+      "type": "string",
+      "description": "Emoji icon"
+    }
+  },
+  "required": [
+    "name",
+    "points_required",
+    "reward_type"
+  ]
+}

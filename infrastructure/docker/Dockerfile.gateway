@@ -1,0 +1,19 @@
+# API Gateway Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY backend/api-gateway/package*.json ./
+COPY backend/queue/package*.json ../queue/
+
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY backend/api-gateway/ ./
+COPY backend/queue/ ../queue/
+
+EXPOSE 4000
+
+CMD ["node", "server.js"]

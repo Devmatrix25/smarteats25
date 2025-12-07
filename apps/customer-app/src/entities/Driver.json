@@ -1,0 +1,138 @@
+{
+  "name": "Driver",
+  "type": "object",
+  "properties": {
+    "email": {
+      "type": "string",
+      "description": "Driver email"
+    },
+    "name": {
+      "type": "string",
+      "description": "Full name"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number"
+    },
+    "profile_image": {
+      "type": "string",
+      "description": "Profile photo URL"
+    },
+    "vehicle_type": {
+      "type": "string",
+      "enum": [
+        "bicycle",
+        "scooter",
+        "motorcycle",
+        "car"
+      ],
+      "default": "scooter",
+      "description": "Vehicle type"
+    },
+    "vehicle_number": {
+      "type": "string",
+      "description": "Vehicle registration"
+    },
+    "license_number": {
+      "type": "string",
+      "description": "Driving license"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "suspended"
+      ],
+      "default": "pending",
+      "description": "Account status"
+    },
+    "is_online": {
+      "type": "boolean",
+      "default": false,
+      "description": "Currently online"
+    },
+    "availability_status": {
+      "type": "string",
+      "enum": [
+        "available",
+        "on_break",
+        "unavailable"
+      ],
+      "default": "available",
+      "description": "Driver availability status"
+    },
+    "is_busy": {
+      "type": "boolean",
+      "default": false,
+      "description": "Currently on delivery"
+    },
+    "current_latitude": {
+      "type": "number",
+      "description": "Current location lat"
+    },
+    "current_longitude": {
+      "type": "number",
+      "description": "Current location lng"
+    },
+    "city": {
+      "type": "string",
+      "description": "Operating city"
+    },
+    "total_deliveries": {
+      "type": "number",
+      "default": 0,
+      "description": "Total deliveries completed"
+    },
+    "average_rating": {
+      "type": "number",
+      "default": 5,
+      "description": "Average rating"
+    },
+    "total_earnings": {
+      "type": "number",
+      "default": 0,
+      "description": "Total earnings"
+    },
+    "max_batch_orders": {
+      "type": "number",
+      "default": 3,
+      "description": "Max orders driver can batch"
+    },
+    "current_batch_count": {
+      "type": "number",
+      "default": 0,
+      "description": "Current batched orders count"
+    },
+    "approved_by": {
+      "type": "string",
+      "description": "Admin who approved"
+    },
+    "approved_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Approval timestamp"
+    },
+    "documents": {
+      "type": "object",
+      "properties": {
+        "license_url": {
+          "type": "string"
+        },
+        "id_proof_url": {
+          "type": "string"
+        },
+        "vehicle_rc_url": {
+          "type": "string"
+        }
+      },
+      "description": "Uploaded documents"
+    }
+  },
+  "required": [
+    "email",
+    "name",
+    "phone"
+  ]
+}

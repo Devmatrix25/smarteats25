@@ -1,0 +1,17 @@
+# WebSocket Server Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY backend/sockets/package*.json ./
+COPY backend/queue/package*.json ../queue/
+
+RUN npm install
+RUN cd ../queue && npm install
+
+COPY backend/sockets/ ./
+COPY backend/queue/ ../queue/
+
+EXPOSE 4100
+
+CMD ["node", "server.js"]

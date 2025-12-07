@@ -1,0 +1,62 @@
+{
+  "name": "smarteats-monorepo",
+  "version": "1.0.0",
+  "description": "SmartEats - Full-Stack Food Delivery Platform with Microservices Architecture",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "backend/api-gateway",
+    "backend/services/*",
+    "backend/sockets",
+    "backend/queue"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm:dev:*\"",
+    "dev:customer": "npm run dev --workspace=apps/customer-app",
+    "dev:restaurant": "npm run dev --workspace=apps/restaurant-app",
+    "dev:delivery": "npm run dev --workspace=apps/delivery-app",
+    "dev:admin": "npm run dev --workspace=apps/admin-app",
+    "dev:gateway": "npm run dev --workspace=backend/api-gateway",
+    "dev:auth": "npm run dev --workspace=backend/services/auth-service",
+    "dev:order": "npm run dev --workspace=backend/services/order-service",
+    "dev:restaurant-service": "npm run dev --workspace=backend/services/restaurant-service",
+    "dev:delivery-service": "npm run dev --workspace=backend/services/delivery-service",
+    "dev:payment": "npm run dev --workspace=backend/services/payment-service",
+    "dev:notification": "npm run dev --workspace=backend/services/notification-service",
+    "dev:sockets": "npm run dev --workspace=backend/sockets",
+    "build": "npm run build --workspaces",
+    "build:customer": "npm run build --workspace=apps/customer-app",
+    "build:restaurant": "npm run build --workspace=apps/restaurant-app",
+    "build:delivery": "npm run build --workspace=apps/delivery-app",
+    "build:admin": "npm run build --workspace=apps/admin-app",
+    "test": "npm run test --workspaces",
+    "lint": "npm run lint --workspaces",
+    "clean": "npm run clean --workspaces && rm -rf node_modules",
+    "install:all": "npm install",
+    "docker:up": "docker-compose -f infrastructure/docker/docker-compose.yml up",
+    "docker:down": "docker-compose -f infrastructure/docker/docker-compose.yml down",
+    "docker:build": "docker-compose -f infrastructure/docker/docker-compose.yml build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "dependencies": {
+    "@radix-ui/react-popover": "^1.1.15",
+    "@radix-ui/react-slider": "^1.3.6",
+    "@react-oauth/google": "^0.12.2",
+    "canvas-confetti": "^1.9.4",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
+    "framer-motion": "^12.23.25",
+    "leaflet": "^1.9.4",
+    "react-day-picker": "^9.11.3",
+    "recharts": "^3.5.1",
+    "socket.io-client": "^4.8.1",
+    "tailwind-merge": "^3.4.0"
+  }
+}

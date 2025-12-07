@@ -1,0 +1,13 @@
+# Restaurant Service Dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+COPY backend/services/restaurant-service/package*.json ./
+RUN npm install
+
+COPY backend/services/restaurant-service/ ./
+
+EXPOSE 4003
+
+CMD ["node", "server.js"]

@@ -1,0 +1,32 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'api-gateway'
+    static_configs:
+      - targets: ['api-gateway:4000']
+
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['auth-service:4001']
+
+  - job_name: 'order-service'
+    static_configs:
+      - targets: ['order-service:4002']
+
+  - job_name: 'restaurant-service'
+    static_configs:
+      - targets: ['restaurant-service:4003']
+
+  - job_name: 'delivery-service'
+    static_configs:
+      - targets: ['delivery-service:4004']
+
+  - job_name: 'notification-service'
+    static_configs:
+      - targets: ['notification-service:4006']

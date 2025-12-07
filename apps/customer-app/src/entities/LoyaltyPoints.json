@@ -1,0 +1,44 @@
+{
+  "name": "LoyaltyPoints",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "Customer email"
+    },
+    "total_points": {
+      "type": "number",
+      "default": 0,
+      "description": "Total points earned"
+    },
+    "available_points": {
+      "type": "number",
+      "default": 0,
+      "description": "Points available to redeem"
+    },
+    "lifetime_points": {
+      "type": "number",
+      "default": 0,
+      "description": "All-time points earned"
+    },
+    "tier": {
+      "type": "string",
+      "enum": [
+        "bronze",
+        "silver",
+        "gold",
+        "platinum"
+      ],
+      "default": "bronze",
+      "description": "Loyalty tier"
+    },
+    "tier_progress": {
+      "type": "number",
+      "default": 0,
+      "description": "Progress to next tier"
+    }
+  },
+  "required": [
+    "user_email"
+  ]
+}

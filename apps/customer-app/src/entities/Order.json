@@ -1,0 +1,207 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "order_number": {
+      "type": "string",
+      "description": "Unique order number"
+    },
+    "customer_email": {
+      "type": "string",
+      "description": "Customer email"
+    },
+    "customer_name": {
+      "type": "string",
+      "description": "Customer name"
+    },
+    "customer_phone": {
+      "type": "string",
+      "description": "Customer phone"
+    },
+    "restaurant_id": {
+      "type": "string",
+      "description": "Restaurant ID"
+    },
+    "restaurant_name": {
+      "type": "string",
+      "description": "Restaurant name"
+    },
+    "driver_email": {
+      "type": "string",
+      "description": "Assigned driver email"
+    },
+    "driver_name": {
+      "type": "string",
+      "description": "Driver name"
+    },
+    "driver_id": {
+      "type": "string",
+      "description": "Driver entity ID"
+    },
+    "items": {
+      "type": "array",
+      "description": "Order items",
+      "items": {
+        "type": "object",
+        "properties": {
+          "menu_item_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "special_instructions": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "subtotal": {
+      "type": "number",
+      "description": "Items subtotal"
+    },
+    "delivery_fee": {
+      "type": "number",
+      "description": "Delivery fee"
+    },
+    "taxes": {
+      "type": "number",
+      "description": "Tax amount"
+    },
+    "discount": {
+      "type": "number",
+      "default": 0,
+      "description": "Discount applied"
+    },
+    "points_earned": {
+      "type": "number",
+      "default": 0,
+      "description": "Loyalty points earned"
+    },
+    "points_redeemed": {
+      "type": "number",
+      "default": 0,
+      "description": "Points redeemed for discount"
+    },
+    "total_amount": {
+      "type": "number",
+      "description": "Total payable"
+    },
+    "payment_method": {
+      "type": "string",
+      "enum": [
+        "cod",
+        "card",
+        "upi",
+        "wallet"
+      ],
+      "default": "cod",
+      "description": "Payment method"
+    },
+    "payment_status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "paid",
+        "failed",
+        "refunded"
+      ],
+      "default": "pending",
+      "description": "Payment status"
+    },
+    "payment_id": {
+      "type": "string",
+      "description": "Payment gateway transaction ID"
+    },
+    "order_status": {
+      "type": "string",
+      "enum": [
+        "scheduled",
+        "placed",
+        "confirmed",
+        "preparing",
+        "ready",
+        "picked_up",
+        "on_the_way",
+        "delivered",
+        "cancelled"
+      ],
+      "default": "placed",
+      "description": "Order status"
+    },
+    "is_scheduled": {
+      "type": "boolean",
+      "default": false,
+      "description": "Is this a scheduled order"
+    },
+    "scheduled_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Scheduled delivery date"
+    },
+    "scheduled_time": {
+      "type": "string",
+      "description": "Scheduled delivery time slot"
+    },
+    "delivery_address": {
+      "type": "string",
+      "description": "Delivery address"
+    },
+    "delivery_latitude": {
+      "type": "number",
+      "description": "Delivery location lat"
+    },
+    "delivery_longitude": {
+      "type": "number",
+      "description": "Delivery location lng"
+    },
+    "delivery_instructions": {
+      "type": "string",
+      "description": "Special delivery instructions"
+    },
+    "estimated_delivery_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Estimated delivery"
+    },
+    "actual_delivery_time": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Actual delivery time"
+    },
+    "driver_location_lat": {
+      "type": "number",
+      "description": "Current driver latitude"
+    },
+    "driver_location_lng": {
+      "type": "number",
+      "description": "Current driver longitude"
+    },
+    "cancelled_by": {
+      "type": "string",
+      "description": "Who cancelled"
+    },
+    "cancellation_reason": {
+      "type": "string",
+      "description": "Cancellation reason"
+    },
+    "is_reviewed": {
+      "type": "boolean",
+      "default": false,
+      "description": "Has customer reviewed"
+    }
+  },
+  "required": [
+    "customer_email",
+    "restaurant_id",
+    "items",
+    "total_amount",
+    "delivery_address"
+  ]
+}

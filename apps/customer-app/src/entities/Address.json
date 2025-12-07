@@ -1,0 +1,54 @@
+{
+  "name": "Address",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "User email"
+    },
+    "label": {
+      "type": "string",
+      "enum": [
+        "home",
+        "work",
+        "other"
+      ],
+      "default": "home",
+      "description": "Address label"
+    },
+    "full_address": {
+      "type": "string",
+      "description": "Complete address"
+    },
+    "landmark": {
+      "type": "string",
+      "description": "Nearby landmark"
+    },
+    "city": {
+      "type": "string",
+      "description": "City"
+    },
+    "pincode": {
+      "type": "string",
+      "description": "PIN code"
+    },
+    "latitude": {
+      "type": "number",
+      "description": "Latitude"
+    },
+    "longitude": {
+      "type": "number",
+      "description": "Longitude"
+    },
+    "is_default": {
+      "type": "boolean",
+      "default": false,
+      "description": "Default address"
+    }
+  },
+  "required": [
+    "user_email",
+    "full_address",
+    "city"
+  ]
+}

@@ -1,0 +1,32 @@
+# Render Blueprint - Auto-deploy SmartEats
+# Push to GitHub, connect to Render, everything deploys automatically
+
+services:
+  # ============ FRONTEND ============
+  - type: web
+    name: smarteats-frontend
+    runtime: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://smarteats-api.onrender.com
+      - key: VITE_GEMINI_API_KEY
+        sync: false
+
+  # ============ API GATEWAY ============
+  - type: web
+    name: smarteats-api
+    runtime: node
+    rootDir: backend/api-gateway
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: REDIS_URL
+        sync: false
