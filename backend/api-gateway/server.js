@@ -4,16 +4,13 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
-import { createRequire } from 'module';
 import rateLimit from 'express-rate-limit';
 import { createClient } from 'redis';
 import jwt from 'jsonwebtoken';
-
-const require = createRequire(import.meta.url);
-// http-proxy-middleware is a CommonJS module; import using require
-const createProxyMiddleware = require('http-proxy-middleware');
+import { createProxyMiddleware } from 'http-proxy-middleware';
 
 dotenv.config();
+
 
 // Log critical environment variables for debugging
 console.log('🔧 ENV LOGGING:');
@@ -103,7 +100,6 @@ const services = {
 };
 
 console.log('DEBUG: Services config:', services);
-console.log('DEBUG: createProxyMiddleware type:', typeof createProxyMiddleware);
 
 // Proxy configuration shared options
 const proxyOptions = {
