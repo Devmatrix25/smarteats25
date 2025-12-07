@@ -52,6 +52,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('combined'));
 
+// Trust proxy for Render deployment (required for rate limiting behind reverse proxy)
+app.set('trust proxy', 1);
 
 // Rate limiting
 const limiter = rateLimit({
