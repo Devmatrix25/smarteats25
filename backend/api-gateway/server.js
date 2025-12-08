@@ -148,9 +148,19 @@ const proxyOptions = {
   timeout: 60000, // 60 second timeout for cold start
   proxyTimeout: 60000,
   onProxyReq: (proxyReq, req, res) => {
+    // Add user headers if authenticated
     if (req.user) {
       proxyReq.setHeader('X-User-Id', req.user.userId);
       proxyReq.setHeader('X-User-Role', req.user.role);
+    }
+
+    // Fix: Re-stream body that was consumed by express.json()
+    // This is required because body-parser consumes the stream
+    if (req.body && Object.keys(req.body).length > 0) {
+      const bodyData = JSON.stringify(req.body);
+      proxyReq.setHeader('Content-Type', 'application/json');
+      proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+      proxyReq.write(bodyData);
     }
   },
   onError: (err, req, res) => {
