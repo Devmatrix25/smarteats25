@@ -19,10 +19,11 @@ const AUTH_URL = `${API_URL}/auth`;
 const CURRENT_USER_KEY = 'smarteats_current_user';
 
 // Create axios instance
+// Timeout set to 60s to handle Render free tier cold starts (30-60 seconds)
 const apiClient = axios.create({
     baseURL: API_URL,
     headers: { 'Content-Type': 'application/json' },
-    timeout: 10000
+    timeout: 60000
 });
 
 // Add auth token to requests
