@@ -1,5 +1,5 @@
 import Payment from '../models/Payment.js';
-import { PaymentEvents } from '../../../queue/index.js';
+import { PaymentEvents } from '../queue/index.js';
 // import Stripe from 'stripe';
 // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 

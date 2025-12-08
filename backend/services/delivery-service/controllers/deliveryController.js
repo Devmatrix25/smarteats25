@@ -1,5 +1,5 @@
 import { Driver, Delivery } from '../models/Driver.js';
-import { DeliveryEvents } from '../../../queue/index.js';
+import { DeliveryEvents } from '../queue/index.js';
 
 // Driver Management
 export const registerDriver = async (req, res) => {

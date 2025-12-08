@@ -1,5 +1,5 @@
 import Order from '../models/Order.js';
-import { OrderEvents } from '../../../queue/index.js';
+import { OrderEvents } from '../queue/index.js';
 
 export const createOrder = async (req, res) => {
     try {

@@ -1,5 +1,5 @@
 import Notification from '../models/Notification.js';
-import { consumeQueue } from '../../../queue/index.js';
+import { consumeQueue } from '../queue/index.js';
 
 export const getNotifications = async (req, res) => {
     try {
