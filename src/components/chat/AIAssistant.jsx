@@ -115,8 +115,12 @@ export default function AIAssistant() {
     setMenuRecommendations([]);
 
     try {
-      const restaurants = await base44.entities.Restaurant.filter({});
-      const menuItems = await base44.entities.MenuItem.filter({});
+      const restaurantsData = await base44.entities.Restaurant.filter({});
+      const menuItemsData = await base44.entities.MenuItem.filter({});
+
+      // Ensure arrays
+      const restaurants = Array.isArray(restaurantsData) ? restaurantsData : [];
+      const menuItems = Array.isArray(menuItemsData) ? menuItemsData : [];
 
       let aiResponse = null;
 

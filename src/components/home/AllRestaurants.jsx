@@ -21,7 +21,10 @@ const filters = [
 export default function AllRestaurants({ restaurants, isLoading }) {
   const [activeFilter, setActiveFilter] = useState("all");
 
-  const filteredRestaurants = restaurants.filter(r => {
+  // Ensure restaurants is always an array
+  const safeRestaurants = Array.isArray(restaurants) ? restaurants : [];
+
+  const filteredRestaurants = safeRestaurants.filter(r => {
     if (activeFilter === "all") return true;
     if (activeFilter === "rating") return (r.average_rating || 0) >= 4;
     if (activeFilter === "fast") return (r.delivery_time_mins || 30) <= 25;

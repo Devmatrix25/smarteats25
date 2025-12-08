@@ -225,12 +225,14 @@ const createEntityAPI = (entityName) => {
                 const response = await apiClient.get(endpoint, {
                     params: { ...filters, _sort: sort, _limit: limit }
                 });
-                return response.data.data || response.data || [];
+                // CRITICAL: Always ensure we return an array to prevent .filter() errors
+                const result = response.data.data || response.data || [];
+                return Array.isArray(result) ? result : [];
             } catch (error) {
                 console.log(`Backend unavailable for ${entityName}, using mock data`);
                 // Fallback to mock data
-                if (entityName === 'Restaurant') return mockRestaurants;
-                if (entityName === 'MenuItem') return mockMenuItems;
+                if (entityName === 'Restaurant') return mockRestaurants || [];
+                if (entityName === 'MenuItem') return mockMenuItems || [];
                 return [];
             }
         },

@@ -7,8 +7,10 @@ import PremiumRestaurantCard from "./PremiumRestaurantCard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function FeaturedRestaurants({ restaurants, isLoading }) {
-  const featuredRestaurants = restaurants.filter(r => r.is_featured).slice(0, 4);
-  const displayRestaurants = featuredRestaurants.length > 0 ? featuredRestaurants : restaurants.slice(0, 4);
+  // Ensure restaurants is always an array
+  const safeRestaurants = Array.isArray(restaurants) ? restaurants : [];
+  const featuredRestaurants = safeRestaurants.filter(r => r.is_featured).slice(0, 4);
+  const displayRestaurants = featuredRestaurants.length > 0 ? featuredRestaurants : safeRestaurants.slice(0, 4);
 
   return (
     <section className="py-12 bg-gradient-to-b from-white to-orange-50/30">
