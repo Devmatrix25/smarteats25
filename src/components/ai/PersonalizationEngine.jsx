@@ -21,37 +21,46 @@ export default function PersonalizationEngine({ user, restaurants = [], orders =
   // Fetch reviews to power recommendations based on ratings
   const { data: reviews = [] } = useQuery({
     queryKey: ['all-reviews'],
-    queryFn: () => base44.entities.Review.filter({}, '-created_date', 100),
+    queryFn: async () => {
+      const data = await base44.entities.Review.filter({}, '-created_date', 100);
+      return Array.isArray(data) ? data : [];
+    },
     staleTime: 60000
   });
 
   useEffect(() => {
-    if (restaurants.length > 0) {
+    // Ensure restaurants is an array before calling filter
+    if (Array.isArray(restaurants) && restaurants.length > 0) {
       analyzeAndRecommend();
     }
   }, [user, restaurants, orders, reviews]);
 
   const analyzeAndRecommend = async () => {
     setIsLoading(true);
-    
+
+    // Ensure data is arrays
+    const safeRestaurants = Array.isArray(restaurants) ? restaurants : [];
+    const safeOrders = Array.isArray(orders) ? orders : [];
+    const safeReviews = Array.isArray(reviews) ? reviews : [];
+
     // Analyze user order history
-    const preferences = analyzeOrderHistory(orders);
+    const preferences = analyzeOrderHistory(safeOrders);
     setUserPreferences(preferences);
-    
+
     // Generate personalized recommendations
-    const personalized = generatePersonalizedRecommendations(restaurants, preferences);
-    
+    const personalized = generatePersonalizedRecommendations(safeRestaurants, preferences);
+
     // Get reorder suggestions (past ordered restaurants)
-    const reorderSuggestions = getReorderSuggestions(orders, restaurants);
-    
+    const reorderSuggestions = getReorderSuggestions(safeOrders, safeRestaurants);
+
     // Get trending (highest rated, most orders)
-    const trending = restaurants
+    const trending = safeRestaurants
       .filter(r => (r.average_rating || 0) >= 4)
       .sort((a, b) => (b.average_rating || 0) - (a.average_rating || 0))
       .slice(0, 6);
-    
+
     // New arrivals (most recently created)
-    const newArrivals = [...restaurants]
+    const newArrivals = [...safeRestaurants]
       .sort((a, b) => new Date(b.created_date) - new Date(a.created_date))
       .slice(0, 6);
 
@@ -61,7 +70,7 @@ export default function PersonalizationEngine({ user, restaurants = [], orders =
       trending,
       newArrivals
     });
-    
+
     setIsLoading(false);
   };
 
@@ -85,16 +94,16 @@ export default function PersonalizationEngine({ user, restaurants = [], orders =
 
     orders.forEach(order => {
       totalValue += order.total_amount || 0;
-      
+
       // Track restaurant frequency
       if (order.restaurant_id) {
         restaurantCounts[order.restaurant_id] = (restaurantCounts[order.restaurant_id] || 0) + 1;
       }
-      
+
       // Track order times
       const orderHour = new Date(order.created_date).getHours();
       orderTimes.push(orderHour);
-      
+
       // Track cuisines
       const restaurant = restaurants.find(r => r.id === order.restaurant_id);
       if (restaurant?.cuisine_type) {
@@ -144,38 +153,38 @@ export default function PersonalizationEngine({ user, restaurants = [], orders =
     // Score each restaurant based on user preferences and reviews
     const scoredRestaurants = restaurants.map(restaurant => {
       let score = 0;
-      
+
       // Cuisine match
-      const cuisineMatch = restaurant.cuisine_type?.some(c => 
+      const cuisineMatch = restaurant.cuisine_type?.some(c =>
         preferences.favoriteCuisines.includes(c)
       );
       if (cuisineMatch) score += 30;
-      
+
       // Rating bonus
       score += (restaurant.average_rating || 0) * 5;
-      
+
       // Recent positive reviews bonus
       const restaurantReviews = reviews.filter(r => r.restaurant_id === restaurant.id);
       const recentPositive = restaurantReviews.filter(r => r.overall_rating >= 4).length;
       score += recentPositive * 3;
-      
+
       // Food quality rating bonus
-      const avgFoodRating = restaurantReviews.length > 0 
+      const avgFoodRating = restaurantReviews.length > 0
         ? restaurantReviews.reduce((acc, r) => acc + (r.food_rating || r.overall_rating), 0) / restaurantReviews.length
         : 0;
       score += avgFoodRating * 4;
-      
+
       // Fast delivery bonus if user orders frequently
       if ((restaurant.delivery_time_mins || 30) < 25) score += 10;
-      
+
       // Featured bonus
       if (restaurant.is_featured) score += 15;
-      
+
       // Avoid recently ordered restaurants for variety
       if (!preferences.frequentRestaurants.includes(restaurant.id)) {
         score += 5;
       }
-      
+
       return { ...restaurant, score };
     });
 
@@ -195,7 +204,7 @@ export default function PersonalizationEngine({ user, restaurants = [], orders =
         <div>
           <Skeleton className="h-6 w-48 mb-4" />
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[1,2,3,4].map(i => <Skeleton key={i} className="h-48 rounded-xl" />)}
+            {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-48 rounded-xl" />)}
           </div>
         </div>
       </div>
@@ -221,14 +230,14 @@ export default function PersonalizationEngine({ user, restaurants = [], orders =
                 )}
               </div>
             </div>
-            <Link 
+            <Link
               to={createPageUrl("Restaurants")}
               className="text-[#F25C23] font-medium text-sm flex items-center hover:underline"
             >
               View All <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {recommendations.forYou.slice(0, 4).map(restaurant => (
               <RestaurantCard key={restaurant.id} restaurant={restaurant} />
@@ -251,16 +260,16 @@ export default function PersonalizationEngine({ user, restaurants = [], orders =
               </div>
             </div>
           </div>
-          
+
           <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
             {recommendations.reorder.map(restaurant => (
-              <Link 
+              <Link
                 key={restaurant.id}
                 to={`${createPageUrl("Restaurant")}?id=${restaurant.id}`}
                 className="flex-shrink-0 w-72"
               >
                 <div className="bg-white rounded-xl p-4 border border-gray-100 hover:shadow-lg transition-all flex items-center gap-4">
-                  <img 
+                  <img
                     src={restaurant.image_url || "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=100&q=80"}
                     alt={restaurant.name}
                     className="w-16 h-16 rounded-lg object-cover"
@@ -300,14 +309,14 @@ export default function PersonalizationEngine({ user, restaurants = [], orders =
                 <p className="text-sm text-gray-500">Popular in your area</p>
               </div>
             </div>
-            <Link 
+            <Link
               to={createPageUrl("Restaurants")}
               className="text-[#F25C23] font-medium text-sm flex items-center hover:underline"
             >
               View All <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {recommendations.trending.slice(0, 3).map((restaurant, idx) => (
               <div key={restaurant.id} className="relative">

@@ -43,13 +43,18 @@ export default function Home() {
     queryKey: ['restaurants', 'approved'],
     queryFn: async () => {
       const data = await base44.entities.Restaurant.filter({ status: 'approved' });
-      return data;
+      // Ensure we always return an array
+      return Array.isArray(data) ? data : [];
     }
   });
 
   const { data: orders = [] } = useQuery({
     queryKey: ['user-orders', user?.email],
-    queryFn: () => base44.entities.Order.filter({ customer_email: user.email }),
+    queryFn: async () => {
+      const data = await base44.entities.Order.filter({ customer_email: user.email });
+      // Ensure we always return an array
+      return Array.isArray(data) ? data : [];
+    },
     enabled: !!user?.email
   });
 
@@ -68,25 +73,25 @@ export default function Home() {
     <div className="min-h-screen">
       <HeroSection />
       <CategorySection />
-      
+
       {/* Magical Flavor Lens Banner */}
       <FlavorLensBanner />
-      
+
       {/* AI-Powered Personalized Recommendations */}
       {user && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <PersonalizationEngine 
-            user={user} 
-            restaurants={restaurants} 
-            orders={orders} 
+          <PersonalizationEngine
+            user={user}
+            restaurants={restaurants}
+            orders={orders}
           />
         </div>
       )}
-      
+
       <FeaturedRestaurants restaurants={restaurants} isLoading={restaurantsLoading} />
       <PromoBanner />
       <AllRestaurants restaurants={restaurants} isLoading={restaurantsLoading} />
-      
+
       <AppDownloadBanner />
       <AIAssistant />
     </div>
