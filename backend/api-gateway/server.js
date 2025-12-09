@@ -135,8 +135,8 @@ app.use(helmet({
   crossOriginOpenerPolicy: { policy: "unsafe-none" }
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(morgan('combined'));
 
 // Trust proxy for Render deployment (required for rate limiting behind reverse proxy)
@@ -180,7 +180,7 @@ const optionalAuth = (req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    version: '2.0.2', // Added notifications, loyalty, points endpoints
+    version: '2.0.3', // Debug logging for order POST
     timestamp: new Date().toISOString(),
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     services: {
@@ -523,11 +523,20 @@ app.get('/api/orders', optionalAuth, async (req, res) => {
 });
 
 app.post('/api/orders', async (req, res) => {
+  console.log('=== ORDER POST STARTED ===');
+  console.log('Body keys:', Object.keys(req.body || {}));
+  console.log('Customer:', req.body?.customer_email);
+
   try {
     // Check if MongoDB is connected
     if (!mongoose.connection.db) {
       console.error('MongoDB not connected!');
       return res.status(503).json({ error: 'Database not available, please try again' });
+    }
+
+    if (!req.body || Object.keys(req.body).length === 0) {
+      console.error('Empty request body!');
+      return res.status(400).json({ error: 'Empty request body' });
     }
 
     console.log('Creating order for:', req.body.customer_email);
@@ -544,12 +553,16 @@ app.post('/api/orders', async (req, res) => {
       payment_status: req.body.payment_status || 'pending'
     };
 
+    console.log('Inserting order with number:', orderNumber);
     const result = await mongoose.connection.db.collection('orders').insertOne(orderData);
     console.log('✅ Order created:', orderNumber, result.insertedId.toString());
 
     res.json({ data: { ...orderData, id: result.insertedId.toString(), _id: result.insertedId } });
   } catch (error) {
-    console.error('Orders POST error:', error.message);
+    console.error('=== ORDER POST ERROR ===');
+    console.error('Error name:', error.name);
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
     res.status(500).json({ error: 'Failed to create order', details: error.message });
   }
 });
