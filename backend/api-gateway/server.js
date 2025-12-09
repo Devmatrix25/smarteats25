@@ -181,7 +181,7 @@ const optionalAuth = (req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    version: '2.0.4', // Disabled CSP, added debug logging
+    version: '2.1.0', // ALL endpoints added: addresses, drivers, rewards, notifications, loyalty
     timestamp: new Date().toISOString(),
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     services: {
@@ -692,6 +692,140 @@ app.post('/api/pointstransactions', async (req, res) => {
   } catch (error) {
     console.error('PointsTransactions POST error:', error);
     res.status(500).json({ error: 'Failed to create points transaction' });
+  }
+});
+
+// ==============================================
+// ADDRESSES ENDPOINTS (Required for order placement)
+// ==============================================
+app.get('/api/addresss', async (req, res) => {
+  try {
+    const { user_email, _limit = 50 } = req.query;
+    const query = user_email ? { user_email } : {};
+    const addresses = await mongoose.connection.db.collection('addresses')
+      .find(query).limit(parseInt(_limit)).toArray();
+    const transformed = addresses.map(a => ({ ...a, id: a._id.toString() }));
+    res.json({ data: transformed });
+  } catch (error) {
+    console.error('Addresses GET error:', error);
+    res.json({ data: [] });
+  }
+});
+
+app.post('/api/addresss', async (req, res) => {
+  try {
+    const data = { ...req.body, created_date: new Date() };
+    const result = await mongoose.connection.db.collection('addresses').insertOne(data);
+    console.log('✅ Address created for:', data.user_email);
+    res.json({ data: { ...data, id: result.insertedId.toString(), _id: result.insertedId } });
+  } catch (error) {
+    console.error('Addresses POST error:', error);
+    res.status(500).json({ error: 'Failed to create address' });
+  }
+});
+
+app.patch('/api/addresss/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body, updated_date: new Date() };
+    await mongoose.connection.db.collection('addresses').updateOne(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: updateData }
+    );
+    const updated = await mongoose.connection.db.collection('addresses').findOne({ _id: new mongoose.Types.ObjectId(id) });
+    res.json({ data: { ...updated, id: updated._id.toString() } });
+  } catch (error) {
+    console.error('Addresses PATCH error:', error);
+    res.status(500).json({ error: 'Failed to update address' });
+  }
+});
+
+app.delete('/api/addresss/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await mongoose.connection.db.collection('addresses').deleteOne({ _id: new mongoose.Types.ObjectId(id) });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Addresses DELETE error:', error);
+    res.status(500).json({ error: 'Failed to delete address' });
+  }
+});
+
+// ==============================================
+// DRIVERS ENDPOINTS
+// ==============================================
+app.get('/api/drivers', async (req, res) => {
+  try {
+    const { email, status, is_available, _limit = 100 } = req.query;
+    let query = {};
+    if (email) query.email = email;
+    if (status) query.status = status;
+    if (is_available) query.is_available = is_available === 'true';
+
+    const drivers = await mongoose.connection.db.collection('drivers')
+      .find(query).limit(parseInt(_limit)).toArray();
+    const transformed = drivers.map(d => ({ ...d, id: d._id.toString() }));
+    res.json({ data: transformed });
+  } catch (error) {
+    console.error('Drivers GET error:', error);
+    res.json({ data: [] });
+  }
+});
+
+app.post('/api/drivers', async (req, res) => {
+  try {
+    const data = { ...req.body, created_date: new Date(), status: 'pending' };
+    const result = await mongoose.connection.db.collection('drivers').insertOne(data);
+    res.json({ data: { ...data, id: result.insertedId.toString(), _id: result.insertedId } });
+  } catch (error) {
+    console.error('Drivers POST error:', error);
+    res.status(500).json({ error: 'Failed to create driver' });
+  }
+});
+
+app.patch('/api/drivers/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body, updated_date: new Date() };
+    await mongoose.connection.db.collection('drivers').updateOne(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: updateData }
+    );
+    const updated = await mongoose.connection.db.collection('drivers').findOne({ _id: new mongoose.Types.ObjectId(id) });
+    res.json({ data: { ...updated, id: updated._id.toString() } });
+  } catch (error) {
+    console.error('Drivers PATCH error:', error);
+    res.status(500).json({ error: 'Failed to update driver' });
+  }
+});
+
+// ==============================================
+// REWARDS ENDPOINTS
+// ==============================================
+app.get('/api/rewards', async (req, res) => {
+  try {
+    const { is_active, _limit = 50 } = req.query;
+    let query = {};
+    if (is_active) query.is_active = is_active === 'true';
+
+    const rewards = await mongoose.connection.db.collection('rewards')
+      .find(query).limit(parseInt(_limit)).toArray();
+    const transformed = rewards.map(r => ({ ...r, id: r._id.toString() }));
+    res.json({ data: transformed });
+  } catch (error) {
+    console.error('Rewards GET error:', error);
+    res.json({ data: [] });
+  }
+});
+
+app.post('/api/rewards', async (req, res) => {
+  try {
+    const data = { ...req.body, created_date: new Date() };
+    const result = await mongoose.connection.db.collection('rewards').insertOne(data);
+    res.json({ data: { ...data, id: result.insertedId.toString(), _id: result.insertedId } });
+  } catch (error) {
+    console.error('Rewards POST error:', error);
+    res.status(500).json({ error: 'Failed to create reward' });
   }
 });
 
