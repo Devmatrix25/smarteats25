@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { 
+import {
   DollarSign, TrendingUp, Trophy, Star, Award, Target,
   Calendar, ChevronDown, Zap, Gift, Medal, Crown, Flame
 } from "lucide-react";
@@ -57,7 +57,7 @@ export default function DriverEarnings() {
     queryKey: ['driver-orders-earnings', driver?.email],
     queryFn: () => base44.entities.Order.filter({ driver_email: driver.email, order_status: 'delivered' }),
     enabled: !!driver?.email,
-    refetchInterval: 3000 // Real-time updates every 3 seconds
+    staleTime: 30000 // Cache for 30 seconds
   });
 
   // Also refresh driver data for real-time earnings
@@ -68,7 +68,7 @@ export default function DriverEarnings() {
       return drivers[0];
     },
     enabled: !!driver?.email,
-    refetchInterval: 3000
+    staleTime: 30000
   });
 
   // Update driver state when data changes
@@ -128,45 +128,45 @@ export default function DriverEarnings() {
 
   // Badges and achievements
   const achievements = [
-    { 
-      id: 'first_delivery', 
-      name: 'First Delivery', 
-      icon: '🎉', 
+    {
+      id: 'first_delivery',
+      name: 'First Delivery',
+      icon: '🎉',
       earned: (driver?.total_deliveries || 0) >= 1,
       desc: 'Complete your first delivery'
     },
-    { 
-      id: 'speed_demon', 
-      name: 'Speed Demon', 
-      icon: '⚡', 
+    {
+      id: 'speed_demon',
+      name: 'Speed Demon',
+      icon: '⚡',
       earned: (driver?.total_deliveries || 0) >= 10,
       desc: 'Complete 10 deliveries'
     },
-    { 
-      id: 'five_star', 
-      name: 'Five Star', 
-      icon: '⭐', 
+    {
+      id: 'five_star',
+      name: 'Five Star',
+      icon: '⭐',
       earned: (driver?.average_rating || 0) >= 4.5,
       desc: 'Maintain 4.5+ rating'
     },
-    { 
-      id: 'century', 
-      name: 'Century Club', 
-      icon: '💯', 
+    {
+      id: 'century',
+      name: 'Century Club',
+      icon: '💯',
       earned: (driver?.total_deliveries || 0) >= 100,
       desc: 'Complete 100 deliveries'
     },
-    { 
-      id: 'streak', 
-      name: 'Weekly Streak', 
-      icon: '🔥', 
+    {
+      id: 'streak',
+      name: 'Weekly Streak',
+      icon: '🔥',
       earned: calculateEarnings(orders, 'week').count >= 25,
       desc: 'Complete 25 deliveries in a week'
     },
-    { 
-      id: 'top_earner', 
-      name: 'Top Earner', 
-      icon: '💰', 
+    {
+      id: 'top_earner',
+      name: 'Top Earner',
+      icon: '💰',
       earned: (driver?.total_earnings || 0) >= 10000,
       desc: 'Earn ₹10,000 total'
     },
@@ -238,7 +238,7 @@ export default function DriverEarnings() {
     }
   ];
 
-  const completedIncentives = incentivePrograms.filter(p => 
+  const completedIncentives = incentivePrograms.filter(p =>
     p.isRating ? p.current >= p.target : p.current >= p.target
   );
   const totalIncentiveEarnings = completedIncentives.reduce((acc, p) => acc + p.reward, 0);
@@ -266,7 +266,7 @@ export default function DriverEarnings() {
               <DollarSign className="w-8 h-8" />
             </div>
           </div>
-          
+
           {/* Period Selector */}
           <div className="flex gap-2 mb-4">
             {['today', 'week', 'month', 'all'].map(period => (
@@ -334,20 +334,20 @@ export default function DriverEarnings() {
 
             <div className="space-y-4">
               {incentivePrograms.map(program => {
-                const progress = program.isRating 
+                const progress = program.isRating
                   ? (program.current / program.target) * 100
                   : Math.min((program.current / program.target) * 100, 100);
-                const isCompleted = program.isRating 
+                const isCompleted = program.isRating
                   ? program.current >= program.target
                   : program.current >= program.target;
 
                 return (
-                  <div 
-                    key={program.id} 
+                  <div
+                    key={program.id}
                     className={cn(
                       "relative p-4 rounded-2xl border transition-all",
-                      isCompleted 
-                        ? "bg-green-500/20 border-green-500/50" 
+                      isCompleted
+                        ? "bg-green-500/20 border-green-500/50"
                         : "bg-white/5 border-white/10 hover:border-white/20"
                     )}
                   >
@@ -373,7 +373,7 @@ export default function DriverEarnings() {
                         <p className="text-sm text-slate-400 mb-2">{program.description}</p>
                         <div className="flex items-center gap-3">
                           <div className="flex-1 h-2 bg-white/10 rounded-full overflow-hidden">
-                            <div 
+                            <div
                               className={cn("h-full rounded-full bg-gradient-to-r transition-all", program.color)}
                               style={{ width: `${Math.min(progress, 100)}%` }}
                             />
@@ -418,7 +418,7 @@ export default function DriverEarnings() {
             <CardContent>
               <div className="space-y-3">
                 {leaderboard.map((d, idx) => (
-                  <div 
+                  <div
                     key={d.id}
                     className={cn(
                       "flex items-center gap-4 p-3 rounded-xl transition-all",
@@ -461,12 +461,12 @@ export default function DriverEarnings() {
             <CardContent>
               <div className="space-y-3">
                 {achievements.map(achievement => (
-                  <div 
+                  <div
                     key={achievement.id}
                     className={cn(
                       "flex items-center gap-3 p-3 rounded-xl transition-all",
-                      achievement.earned 
-                        ? "bg-purple-50 border border-purple-200" 
+                      achievement.earned
+                        ? "bg-purple-50 border border-purple-200"
                         : "bg-gray-50 opacity-60"
                     )}
                   >
@@ -493,7 +493,7 @@ export default function DriverEarnings() {
           <CardContent>
             {isLoading ? (
               <div className="space-y-3">
-                {[1,2,3].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}
               </div>
             ) : earnings.orders.length > 0 ? (
               <div className="space-y-3">

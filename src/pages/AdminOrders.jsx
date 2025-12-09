@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { 
+import {
   ShoppingCart, Search, Filter, Clock, CheckCircle,
   Package, Truck, XCircle, MapPin, User, Store, Eye, EyeOff, RefreshCw
 } from "lucide-react";
@@ -96,7 +96,7 @@ export default function AdminOrders() {
     queryKey: ['admin-orders'],
     queryFn: () => base44.entities.Order.list('-created_date', 200),
     enabled: !!user,
-    refetchInterval: 3000 // Real-time updates every 3 seconds
+    staleTime: 30000 // Cache for 30 seconds
   });
 
   const filteredOrders = orders.filter(order => {
@@ -104,8 +104,8 @@ export default function AdminOrders() {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       if (!order.order_number?.toLowerCase().includes(query) &&
-          !order.customer_name?.toLowerCase().includes(query) &&
-          !order.restaurant_name?.toLowerCase().includes(query)) {
+        !order.customer_name?.toLowerCase().includes(query) &&
+        !order.restaurant_name?.toLowerCase().includes(query)) {
         return false;
       }
     }
@@ -131,7 +131,7 @@ export default function AdminOrders() {
         <div className="max-w-7xl mx-auto">
           <Skeleton className="h-10 w-48 mb-6" />
           <div className="space-y-4">
-            {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
+            {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
           </div>
         </div>
       </div>
@@ -191,7 +191,7 @@ export default function AdminOrders() {
         {/* Orders Table */}
         {isLoading ? (
           <div className="space-y-4">
-            {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
+            {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-20 rounded-xl" />)}
           </div>
         ) : filteredOrders.length > 0 ? (
           <div className="bg-white rounded-xl shadow-sm overflow-hidden">
@@ -212,7 +212,7 @@ export default function AdminOrders() {
                   {filteredOrders.map(order => {
                     const status = statusConfig[order.order_status] || statusConfig.placed;
                     const StatusIcon = status.icon;
-                    
+
                     return (
                       <tr key={order.id} className="border-t hover:bg-gray-50">
                         <td className="p-4">
@@ -241,8 +241,8 @@ export default function AdminOrders() {
                           <p className="text-xs text-gray-500">{format(new Date(order.created_date), "MMM d")}</p>
                         </td>
                         <td className="p-4">
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => setSelectedOrder(order)}
                             className="rounded-lg"

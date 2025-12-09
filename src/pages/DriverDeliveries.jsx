@@ -95,7 +95,7 @@ export default function DriverDeliveries() {
     queryKey: ['driver-deliveries', driver?.email],
     queryFn: () => base44.entities.Order.filter({ driver_email: driver.email }, '-created_date'),
     enabled: !!driver?.email,
-    refetchInterval: 2000 // Real-time updates every 2 seconds
+    staleTime: 30000 // Cache for 30 seconds
   });
 
   const registerMutation = useMutation({

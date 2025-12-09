@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { 
+import {
   TrendingUp, Store, Truck, ShoppingCart, Users,
   DollarSign, Clock, AlertCircle, CheckCircle, Activity, Eye, EyeOff
 } from "lucide-react";
@@ -62,7 +62,7 @@ export default function AdminDashboard() {
     queryKey: ['admin-orders'],
     queryFn: () => base44.entities.Order.list('-created_date', 100),
     enabled: !!user,
-    refetchInterval: 3000 // Real-time updates every 3 seconds
+    staleTime: 30000 // Cache for 30 seconds
   });
 
   // Mask customer data for privacy
@@ -100,7 +100,7 @@ export default function AdminDashboard() {
     .filter(o => o.order_status !== 'cancelled')
     .reduce((acc, o) => acc + (o.total_amount || 0), 0);
 
-  const activeOrders = orders.filter(o => 
+  const activeOrders = orders.filter(o =>
     !['delivered', 'cancelled'].includes(o.order_status)
   );
 
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
       <div className="p-6">
         <Skeleton className="h-10 w-48 mb-6" />
         <div className="grid gap-4 md:grid-cols-4">
-          {[1,2,3,4].map(i => <Skeleton key={i} className="h-32 rounded-xl" />)}
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 rounded-xl" />)}
         </div>
       </div>
     );
@@ -139,7 +139,7 @@ export default function AdminDashboard() {
               </div>
             )}
           </div>
-          
+
           {/* Privacy Toggle */}
           <Button
             variant={showPrivateData ? "default" : "outline"}
@@ -248,12 +248,12 @@ export default function AdminDashboard() {
             <CardContent>
               {loadingRestaurants ? (
                 <div className="space-y-4">
-                  {[1,2].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}
+                  {[1, 2].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}
                 </div>
               ) : pendingRestaurants.length > 0 ? (
                 <div className="space-y-4">
                   {pendingRestaurants.slice(0, 5).map(rest => (
-                    <div 
+                    <div
                       key={rest.id}
                       className="flex items-center justify-between p-4 bg-yellow-50 rounded-xl"
                     >
@@ -290,12 +290,12 @@ export default function AdminDashboard() {
             <CardContent>
               {loadingDrivers ? (
                 <div className="space-y-4">
-                  {[1,2].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}
+                  {[1, 2].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}
                 </div>
               ) : pendingDrivers.length > 0 ? (
                 <div className="space-y-4">
                   {pendingDrivers.slice(0, 5).map(driver => (
-                    <div 
+                    <div
                       key={driver.id}
                       className="flex items-center justify-between p-4 bg-yellow-50 rounded-xl"
                     >
@@ -332,12 +332,12 @@ export default function AdminDashboard() {
             <CardContent>
               {loadingOrders ? (
                 <div className="space-y-4">
-                  {[1,2,3].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}
+                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 rounded-xl" />)}
                 </div>
               ) : activeOrders.length > 0 ? (
                 <div className="space-y-4">
                   {activeOrders.slice(0, 5).map(order => (
-                    <div 
+                    <div
                       key={order.id}
                       className="flex items-center justify-between p-4 bg-gray-50 rounded-xl"
                     >

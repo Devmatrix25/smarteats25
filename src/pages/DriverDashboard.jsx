@@ -30,7 +30,7 @@ export default function DriverDashboard() {
     queryKey: ['driver-orders', driver?.email],
     queryFn: () => base44.entities.Order.filter({ driver_email: driver.email }, '-created_date'),
     enabled: !!driver?.email,
-    refetchInterval: 3000
+    staleTime: 30000 // Cache for 30 seconds
   });
 
   const { data: availableOrders = [], refetch: refetchAvailable } = useQuery({
@@ -40,7 +40,7 @@ export default function DriverDashboard() {
       return readyOrders.filter(o => !o.driver_email);
     },
     enabled: !!driver && driver.status === 'approved' && driver.is_online,
-    refetchInterval: 3000
+    staleTime: 30000
   });
 
   const { data: latestDriverData } = useQuery({
@@ -50,7 +50,7 @@ export default function DriverDashboard() {
       return drivers[0];
     },
     enabled: !!driver?.email && driver?.status === 'pending',
-    refetchInterval: 5000
+    staleTime: 30000
   });
 
   useEffect(() => {
