@@ -208,26 +208,34 @@ export default function Cart() {
       return;
     }
 
+    // Validate cart items - filter out any with zero or negative quantities
+    const validItems = (cart.items || []).filter(item => item.quantity > 0);
+    if (validItems.length === 0) {
+      toast.error("Your cart is empty or has invalid items. Please add items again.");
+      return;
+    }
+
     setIsPlacingOrder(true);
 
     try {
       const orderNumber = `SE${Date.now().toString().slice(-8)}`;
-      const finalPointsEarned = Math.floor(total / 10); // 1 point per ₹10
+      const validSubtotal = validItems.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+      const finalPointsEarned = Math.floor(Math.max(0, total) / 10); // 1 point per ₹10
 
       const orderData = {
         order_number: orderNumber,
         customer_email: user.email,
-        customer_name: user.full_name,
+        customer_name: user.full_name || user.email,
         restaurant_id: cart.restaurant_id,
-        restaurant_name: cart.restaurant_name,
-        items: cart.items,
-        subtotal: subtotal,
+        restaurant_name: cart.restaurant_name || 'Restaurant',
+        items: validItems,
+        subtotal: validSubtotal,
         delivery_fee: deliveryFee,
-        taxes: taxes,
-        discount: discount + pointsDiscount,
+        taxes: Math.max(0, taxes),
+        discount: Math.max(0, discount + pointsDiscount),
         points_earned: finalPointsEarned,
         points_redeemed: pointsToRedeem,
-        total_amount: total,
+        total_amount: Math.max(0, total),
         payment_method: paymentMethod,
         payment_status: paymentMethod === "cod" ? "pending" : "paid",
         order_status: schedule.isScheduled ? "scheduled" : "placed",
@@ -243,6 +251,7 @@ export default function Cart() {
           : new Date(Date.now() + 45 * 60 * 1000).toISOString()
       };
 
+      console.log("Placing order:", orderNumber);
       const order = await base44.entities.Order.create(orderData);
 
       // Notify restaurant immediately about new order
@@ -363,12 +372,14 @@ export default function Cart() {
     );
   }
 
-  const subtotal = cart.items.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+  // Filter out any items with invalid quantities for display
+  const validCartItems = (cart.items || []).filter(item => item.quantity > 0);
+  const subtotal = validCartItems.reduce((acc, i) => acc + Math.max(0, i.price * Math.max(0, i.quantity)), 0);
   const deliveryFee = 30;
-  const taxes = Math.round(subtotal * 0.05);
-  const pointsDiscount = Math.floor(pointsToRedeem / 10); // 10 points = ₹1
-  const total = subtotal + deliveryFee + taxes - discount - pointsDiscount;
-  const estimatedPointsEarned = Math.floor(total / 10);
+  const taxes = Math.max(0, Math.round(subtotal * 0.05));
+  const pointsDiscount = Math.max(0, Math.floor(pointsToRedeem / 10)); // 10 points = ₹1
+  const total = Math.max(0, subtotal + deliveryFee + taxes - discount - pointsDiscount);
+  const estimatedPointsEarned = Math.max(0, Math.floor(total / 10));
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
@@ -407,7 +418,7 @@ export default function Cart() {
           {/* Items */}
           <div className="bg-white rounded-2xl p-4 shadow-sm space-y-4">
             <h3 className="font-semibold">Order Items</h3>
-            {cart.items.map((item, idx) => (
+            {validCartItems.map((item, idx) => (
               <div key={idx} className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
                 <img
                   src={item.image_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100&q=80"}

@@ -196,19 +196,35 @@ export default function Restaurant() {
   };
 
   const updateQuantity = async (index, delta) => {
+    if (!cart.items || index < 0 || index >= cart.items.length) return;
+
     let newItems = [...cart.items];
-    newItems[index].quantity += delta;
-    if (newItems[index].quantity <= 0) {
+    const newQuantity = newItems[index].quantity + delta;
+
+    // Prevent negative quantities
+    if (newQuantity < 0) return;
+
+    if (newQuantity === 0) {
       newItems.splice(index, 1);
-    }
-    const subtotal = newItems.reduce((acc, i) => acc + (i.price * i.quantity), 0);
-    const cartData = { ...cart, items: newItems, subtotal };
-    if (newItems.length === 0) {
-      await base44.entities.Cart.delete(cart.id);
-      setCart({ items: [], restaurant_id: null });
     } else {
-      await base44.entities.Cart.update(cart.id, cartData);
-      setCart(cartData);
+      newItems[index].quantity = newQuantity;
+    }
+
+    const subtotal = newItems.reduce((acc, i) => acc + (i.price * Math.max(0, i.quantity)), 0);
+    const cartData = { ...cart, items: newItems, subtotal };
+
+    try {
+      if (newItems.length === 0) {
+        await base44.entities.Cart.delete(cart.id);
+        setCart({ items: [], restaurant_id: null });
+        toast.success("Cart cleared");
+      } else {
+        await base44.entities.Cart.update(cart.id, cartData);
+        setCart(cartData);
+      }
+    } catch (error) {
+      console.error("Failed to update cart:", error);
+      toast.error("Failed to update cart");
     }
   };
 

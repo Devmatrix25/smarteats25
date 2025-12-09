@@ -3,8 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { Link, useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { 
-  Clock, MapPin, ChevronRight, Package, Truck, 
+import {
+  Clock, MapPin, ChevronRight, Package, Truck,
   CheckCircle, XCircle, RefreshCw, Star, Filter, Eye, ShoppingCart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -100,9 +100,9 @@ export default function Orders() {
       result = result.filter(o => {
         const orderDate = new Date(o.created_date);
         if (filters.dateRange.to) {
-          return isWithinInterval(orderDate, { 
-            start: filters.dateRange.from, 
-            end: filters.dateRange.to 
+          return isWithinInterval(orderDate, {
+            start: filters.dateRange.from,
+            end: filters.dateRange.to
           });
         }
         return orderDate >= filters.dateRange.from;
@@ -133,13 +133,21 @@ export default function Orders() {
   const handleReorder = async (order) => {
     try {
       const carts = await base44.entities.Cart.filter({ customer_email: user.email });
-      const cartItems = order.items?.map(item => ({
-        menu_item_id: item.menu_item_id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        image_url: item.image_url
-      })) || [];
+      // Filter out items with invalid quantities
+      const cartItems = (order.items || [])
+        .filter(item => item.quantity > 0)
+        .map(item => ({
+          menu_item_id: item.menu_item_id,
+          name: item.name,
+          price: Math.abs(item.price || 0),
+          quantity: Math.max(1, item.quantity),
+          image_url: item.image_url
+        }));
+
+      if (cartItems.length === 0) {
+        toast.error("No valid items to reorder");
+        return;
+      }
 
       if (carts.length > 0) {
         if (carts[0].restaurant_id && carts[0].restaurant_id !== order.restaurant_id) {
@@ -202,7 +210,7 @@ export default function Orders() {
           {order.items?.slice(0, 3).map((item, idx) => (
             <div key={idx} className="flex-shrink-0">
               <div className="w-16 h-16 bg-gray-100 rounded-xl overflow-hidden">
-                <img 
+                <img
                   src={item.image_url || "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100&q=80"}
                   alt={item.name}
                   className="w-full h-full object-cover"
@@ -241,16 +249,16 @@ export default function Orders() {
               </Button>
             </Link>
           )}
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="rounded-xl"
             onClick={() => setSelectedOrder(order)}
           >
             <Eye className="w-4 h-4 mr-2" />
             Details
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="rounded-xl"
             onClick={() => handleReorder(order)}
           >
@@ -267,7 +275,7 @@ export default function Orders() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         <Skeleton className="h-10 w-48 mb-6" />
         <div className="space-y-4">
-          {[1,2,3].map(i => (
+          {[1, 2, 3].map(i => (
             <Skeleton key={i} className="h-48 rounded-2xl" />
           ))}
         </div>
@@ -280,8 +288,8 @@ export default function Orders() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">My Orders</h1>
         <div className="flex items-center gap-2">
-          <Button 
-            variant={showFilters ? "default" : "outline"} 
+          <Button
+            variant={showFilters ? "default" : "outline"}
             size="sm"
             className={cn("rounded-xl", showFilters && "bg-[#F25C23]")}
             onClick={() => setShowFilters(!showFilters)}
@@ -297,7 +305,7 @@ export default function Orders() {
 
       {/* Filters */}
       {showFilters && (
-        <OrderFilters 
+        <OrderFilters
           filters={filters}
           onFilterChange={setFilters}
           restaurants={restaurants}
@@ -315,13 +323,13 @@ export default function Orders() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-2 mb-6 bg-gray-100 rounded-xl p-1">
-          <TabsTrigger 
-            value="active" 
+          <TabsTrigger
+            value="active"
             className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
             Active ({activeOrders.length})
           </TabsTrigger>
-          <TabsTrigger 
+          <TabsTrigger
             value="past"
             className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
@@ -331,7 +339,7 @@ export default function Orders() {
 
         <TabsContent value="active" className="space-y-4">
           {isLoading ? (
-            [1,2].map(i => (
+            [1, 2].map(i => (
               <Skeleton key={i} className="h-48 rounded-2xl" />
             ))
           ) : activeOrders.length > 0 ? (
@@ -356,7 +364,7 @@ export default function Orders() {
 
         <TabsContent value="past" className="space-y-4">
           {isLoading ? (
-            [1,2,3].map(i => (
+            [1, 2, 3].map(i => (
               <Skeleton key={i} className="h-48 rounded-2xl" />
             ))
           ) : pastOrders.length > 0 ? (

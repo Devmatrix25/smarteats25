@@ -181,7 +181,7 @@ const optionalAuth = (req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    version: '2.1.2', // Robust cart PATCH/DELETE with ObjectId validation
+    version: '2.2.0', // Removed auth from orders PATCH/DELETE, fixed cart quantity bugs
     timestamp: new Date().toISOString(),
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     services: {
@@ -598,7 +598,7 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-app.patch('/api/orders/:id', authenticateToken, async (req, res) => {
+app.patch('/api/orders/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const updateData = { ...req.body, updated_date: new Date() };
@@ -614,7 +614,7 @@ app.patch('/api/orders/:id', authenticateToken, async (req, res) => {
   }
 });
 
-app.delete('/api/orders/:id', authenticateToken, async (req, res) => {
+app.delete('/api/orders/:id', async (req, res) => {
   try {
     const { id } = req.params;
     await mongoose.connection.db.collection('orders').deleteOne({ _id: new mongoose.Types.ObjectId(id) });
