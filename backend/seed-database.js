@@ -689,9 +689,9 @@ async function seedDatabase() {
             is_available: true,
             current_latitude: 12.9716,
             current_longitude: 77.5946,
-            total_deliveries: 150,
-            total_earnings: 15000,
-            average_rating: 4.9,
+            total_deliveries: 0,
+            total_earnings: 0,
+            average_rating: 0,
             created_date: new Date(),
             createdAt: new Date(),
             updatedAt: new Date()
