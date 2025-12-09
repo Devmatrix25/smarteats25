@@ -80,7 +80,8 @@ export default function OrderTracking() {
     queryFn: () => base44.entities.Order.filter({ id: orderId }),
     select: (data) => data[0],
     enabled: !!orderId && !isAuthLoading,
-    staleTime: 30000 // Cache for 30 seconds, use manual refresh or status listener
+    staleTime: 30000,
+    refetchOnWindowFocus: false
   });
 
   // Real-time status change notifications

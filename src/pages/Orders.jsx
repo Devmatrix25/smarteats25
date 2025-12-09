@@ -68,7 +68,9 @@ export default function Orders() {
   const { data: orders = [], isLoading, refetch } = useQuery({
     queryKey: ['orders', user?.email],
     queryFn: () => base44.entities.Order.filter({ customer_email: user.email }, '-created_date'),
-    enabled: !!user?.email
+    enabled: !!user?.email,
+    staleTime: 60000,
+    refetchOnWindowFocus: false
   });
 
   // Get unique restaurants for filter dropdown

@@ -77,13 +77,17 @@ export default function Restaurant() {
     queryKey: ['restaurant', restaurantId],
     queryFn: () => base44.entities.Restaurant.filter({ id: restaurantId }),
     select: (data) => data[0],
-    enabled: !!restaurantId
+    enabled: !!restaurantId,
+    staleTime: 60000,
+    refetchOnWindowFocus: false
   });
 
   const { data: menuItems = [], isLoading: menuLoading } = useQuery({
     queryKey: ['menu', restaurantId],
     queryFn: () => base44.entities.MenuItem.filter({ restaurant_id: restaurantId }),
-    enabled: !!restaurantId
+    enabled: !!restaurantId,
+    staleTime: 60000,
+    refetchOnWindowFocus: false
   });
 
   const categories = [...new Set(menuItems.map(item => item.category || 'Main Course'))];

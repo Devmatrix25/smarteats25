@@ -9,6 +9,7 @@ import { createClient } from 'redis';
 import jwt from 'jsonwebtoken';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 dotenv.config();
 

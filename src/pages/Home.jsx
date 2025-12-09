@@ -45,7 +45,9 @@ export default function Home() {
       const data = await base44.entities.Restaurant.filter({ status: 'approved' });
       // Ensure we always return an array
       return Array.isArray(data) ? data : [];
-    }
+    },
+    staleTime: 60000,
+    refetchOnWindowFocus: false
   });
 
   const { data: orders = [] } = useQuery({
@@ -55,7 +57,9 @@ export default function Home() {
       // Ensure we always return an array
       return Array.isArray(data) ? data : [];
     },
-    enabled: !!user?.email
+    enabled: !!user?.email,
+    staleTime: 60000,
+    refetchOnWindowFocus: false
   });
 
   if (isLoading) {

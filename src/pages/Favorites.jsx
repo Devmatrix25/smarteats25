@@ -38,14 +38,18 @@ export default function Favorites() {
   const { data: favorites = [], isLoading: favoritesLoading, refetch: refetchFavorites } = useQuery({
     queryKey: ['favorites', user?.email],
     queryFn: () => base44.entities.Favorite.filter({ user_email: user.email }),
-    enabled: !!user?.email
+    enabled: !!user?.email,
+    staleTime: 60000,
+    refetchOnWindowFocus: false
   });
 
   // Fetch all restaurants to map favorites
   const { data: allRestaurants = [], isLoading: restaurantsLoading } = useQuery({
     queryKey: ['all-restaurants'],
     queryFn: () => base44.entities.Restaurant.filter({ status: 'approved' }),
-    enabled: !!user?.email
+    enabled: !!user?.email,
+    staleTime: 60000,
+    refetchOnWindowFocus: false
   });
 
   // Get favorite restaurants
