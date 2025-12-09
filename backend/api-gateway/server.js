@@ -181,7 +181,7 @@ const optionalAuth = (req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    version: '2.1.0', // ALL endpoints added: addresses, drivers, rewards, notifications, loyalty
+    version: '2.1.1', // FIXED: Removed auth from cart endpoints
     timestamp: new Date().toISOString(),
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     services: {
@@ -439,8 +439,8 @@ app.get('/api/menuitems', async (req, res) => {
   }
 });
 
-// Carts endpoint
-app.get('/api/carts', optionalAuth, async (req, res) => {
+// Carts endpoint - NO AUTH REQUIRED for cart operations
+app.get('/api/carts', async (req, res) => {
   try {
     const { customer_email, _limit = 100 } = req.query;
     const query = customer_email ? { customer_email } : {};
@@ -453,10 +453,11 @@ app.get('/api/carts', optionalAuth, async (req, res) => {
   }
 });
 
-app.post('/api/carts', authenticateToken, async (req, res) => {
+app.post('/api/carts', async (req, res) => {
   try {
     const cartData = { ...req.body, created_date: new Date(), updated_date: new Date() };
     const result = await mongoose.connection.db.collection('carts').insertOne(cartData);
+    console.log('✅ Cart created for:', cartData.customer_email);
     res.json({ data: { ...cartData, id: result.insertedId.toString(), _id: result.insertedId } });
   } catch (error) {
     console.error('Create cart error:', error);
@@ -464,24 +465,27 @@ app.post('/api/carts', authenticateToken, async (req, res) => {
   }
 });
 
-app.patch('/api/carts/:id', authenticateToken, async (req, res) => {
+app.patch('/api/carts/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    console.log('Updating cart:', id);
     const updateData = { ...req.body, updated_date: new Date() };
     await mongoose.connection.db.collection('carts').updateOne(
       { _id: new mongoose.Types.ObjectId(id) },
       { $set: updateData }
     );
-    res.json({ data: { id, ...updateData } });
+    const updated = await mongoose.connection.db.collection('carts').findOne({ _id: new mongoose.Types.ObjectId(id) });
+    res.json({ data: { ...updated, id: updated._id.toString() } });
   } catch (error) {
     console.error('Update cart error:', error);
-    res.status(500).json({ error: 'Failed to update cart' });
+    res.status(500).json({ error: 'Failed to update cart', details: error.message });
   }
 });
 
-app.delete('/api/carts/:id', authenticateToken, async (req, res) => {
+app.delete('/api/carts/:id', async (req, res) => {
   try {
     const { id } = req.params;
+    console.log('Deleting cart:', id);
     await mongoose.connection.db.collection('carts').deleteOne({ _id: new mongoose.Types.ObjectId(id) });
     res.json({ success: true });
   } catch (error) {
