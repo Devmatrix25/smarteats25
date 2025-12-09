@@ -34,7 +34,7 @@ function MapUpdater({ bounds }) {
 
 const BANGALORE_CENTER = { lat: 12.9716, lng: 77.5946 };
 
-export default function CustomerTrackingMap({ 
+export default function CustomerTrackingMap({
   order,
   restaurantLocation = { lat: 12.9716, lng: 77.5946 },
   deliveryLocation = { lat: 12.9816, lng: 77.6046 }
@@ -122,17 +122,17 @@ export default function CustomerTrackingMap({
             attribution='&copy; OpenStreetMap'
           />
           <MapUpdater bounds={[restaurantPos, deliveryPos]} />
-          
+
           {/* Restaurant Marker */}
           <Marker position={restaurantPos} icon={restaurantIcon}>
             <Popup>{order?.restaurant_name || 'Restaurant'}</Popup>
           </Marker>
-          
+
           {/* Delivery Location Marker */}
           <Marker position={deliveryPos} icon={homeIcon}>
             <Popup>Your Location</Popup>
           </Marker>
-          
+
           {/* Driver Marker - Only when assigned and picked up */}
           {showDriver && driverPos && (
             <Marker position={driverPos} icon={driverIcon}>
@@ -151,78 +151,76 @@ export default function CustomerTrackingMap({
               <Popup>Order being prepared...</Popup>
             </Marker>
           )}
-          
+
           {/* Route Line */}
-          <Polyline 
-            positions={[restaurantPos, deliveryPos]} 
+          <Polyline
+            positions={[restaurantPos, deliveryPos]}
             color={showDriver ? "#3BA55D" : "#F25C23"}
             weight={4}
             dashArray={showDriver ? undefined : "10, 10"}
             opacity={0.7}
           />
-          
+
           {/* Driver trail when on the way */}
           {showDriver && driverPos && (
-            <Polyline 
-              positions={[restaurantPos, driverPos]} 
-              color="#3BA55D" 
+            <Polyline
+              positions={[restaurantPos, driverPos]}
+              color="#3BA55D"
               weight={5}
             />
           )}
         </MapContainer>
       </div>
 
-      {/* Status Overlay */}
-      <div className="absolute bottom-4 left-4 right-4">
-        <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 shadow-lg">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "w-12 h-12 rounded-full flex items-center justify-center text-xl",
-                showDriver ? "bg-[#F25C23] animate-pulse" : "bg-gray-100"
-              )}>
-                {showDriver ? "🛵" : ['preparing', 'ready'].includes(order?.order_status) ? "👨‍🍳" : "📍"}
-              </div>
-              <div>
-                <p className={cn("font-semibold text-sm", statusMessage.color)}>
-                  {statusMessage.text}
-                </p>
-                {order?.driver_name && showDriver && (
-                  <p className="text-xs text-gray-500">{order.driver_name}</p>
-                )}
-              </div>
+      {/* Status Overlay - Now below the map */}
+      <div className="bg-white rounded-b-2xl p-4 border-t">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className={cn(
+              "w-12 h-12 rounded-full flex items-center justify-center text-xl",
+              showDriver ? "bg-[#F25C23] animate-pulse" : "bg-gray-100"
+            )}>
+              {showDriver ? "🛵" : ['preparing', 'ready'].includes(order?.order_status) ? "👨‍🍳" : "📍"}
             </div>
-            {eta !== null && eta > 0 && (
-              <div className="text-right">
-                <p className="text-2xl font-bold text-[#F25C23]">{eta}</p>
-                <p className="text-xs text-gray-500">mins</p>
+            <div>
+              <p className={cn("font-semibold text-sm", statusMessage.color)}>
+                {statusMessage.text}
+              </p>
+              {order?.driver_name && showDriver && (
+                <p className="text-xs text-gray-500">{order.driver_name}</p>
+              )}
+            </div>
+          </div>
+          {eta !== null && eta > 0 && (
+            <div className="text-right">
+              <p className="text-2xl font-bold text-[#F25C23]">{eta}</p>
+              <p className="text-xs text-gray-500">mins</p>
+            </div>
+          )}
+        </div>
+
+        {/* Progress steps */}
+        <div className="flex items-center gap-1">
+          {['placed', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered'].map((step, idx) => {
+            const currentIdx = ['placed', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered'].indexOf(order?.order_status);
+            const isComplete = idx <= currentIdx;
+            const isCurrent = idx === currentIdx;
+
+            return (
+              <div key={step} className="flex-1">
+                <div className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  isComplete ? "bg-green-500" : "bg-gray-200",
+                  isCurrent && "animate-pulse"
+                )} />
               </div>
-            )}
-          </div>
-          
-          {/* Progress steps */}
-          <div className="flex items-center gap-1">
-            {['placed', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered'].map((step, idx) => {
-              const currentIdx = ['placed', 'confirmed', 'preparing', 'ready', 'picked_up', 'on_the_way', 'delivered'].indexOf(order?.order_status);
-              const isComplete = idx <= currentIdx;
-              const isCurrent = idx === currentIdx;
-              
-              return (
-                <div key={step} className="flex-1">
-                  <div className={cn(
-                    "h-1.5 rounded-full transition-all",
-                    isComplete ? "bg-green-500" : "bg-gray-200",
-                    isCurrent && "animate-pulse"
-                  )} />
-                </div>
-              );
-            })}
-          </div>
-          
-          <div className="flex justify-between mt-2 text-xs text-gray-400">
-            <span>Order Placed</span>
-            <span>Delivered</span>
-          </div>
+            );
+          })}
+        </div>
+
+        <div className="flex justify-between mt-2 text-xs text-gray-400">
+          <span>Order Placed</span>
+          <span>Delivered</span>
         </div>
       </div>
 
