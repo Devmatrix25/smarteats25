@@ -96,17 +96,34 @@ export default function DriverDashboard() {
       const drivers = await base44.entities.Driver.filter({ email: email });
       if (drivers.length > 0) {
         setDriver(drivers[0]);
-      } else if (email === 'driver@demo.com') {
-        const d = await base44.entities.Driver.create({
-          name: 'Demo Driver', email, phone: '9876543210', vehicle_type: 'bike',
-          vehicle_number: 'KA-01-AB-1234', city: 'Bangalore', status: 'approved',
-          is_online: true, is_busy: false, average_rating: 0, total_deliveries: 0,
-          total_earnings: 0
-        });
-        setDriver(d);
+      } else {
+        // Auto-create driver record for known driver emails
+        const driverEmails = ['driver@demo.com', 'flashman@smarteats.com'];
+        if (driverEmails.includes(email)) {
+          const isFlashman = email === 'flashman@smarteats.com';
+          const newDriver = await base44.entities.Driver.create({
+            name: isFlashman ? 'Flashman' : 'Demo Driver',
+            email: email,
+            phone: isFlashman ? '+91 99999 88888' : '9876543210',
+            vehicle_type: isFlashman ? 'Motorcycle' : 'bike',
+            vehicle_number: isFlashman ? 'KA-01-FL-0001' : 'KA-01-AB-1234',
+            license_number: isFlashman ? 'DL-FLASH-2024' : 'DL-DEMO-2024',
+            city: 'Bangalore',
+            status: 'approved',
+            is_online: true,
+            is_available: true,
+            average_rating: isFlashman ? 4.9 : 0,
+            total_deliveries: 0,
+            total_earnings: 0,
+            current_latitude: 12.9716,
+            current_longitude: 77.5946
+          });
+          setDriver(newDriver);
+          toast.success(`Welcome ${isFlashman ? 'Flashman' : 'Demo Driver'}! 🚀`);
+        }
       }
     } catch (e) {
-      console.log('No driver found');
+      console.log('Driver load error:', e.message);
     }
   };
 

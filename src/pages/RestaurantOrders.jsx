@@ -110,6 +110,24 @@ export default function RestaurantOrders() {
         });
       }
 
+      // When order is ready, notify all online drivers
+      if (status === 'ready') {
+        try {
+          const onlineDrivers = await base44.entities.Driver.filter({ is_online: true, status: 'approved' });
+          for (const driver of onlineDrivers) {
+            await base44.entities.Notification.create({
+              user_email: driver.email,
+              title: "🔔 New Delivery Available!",
+              message: `Order #${order?.order_number || id.slice(-6)} from ${restaurant.name} is ready for pickup! ₹${order?.total_amount || 0}`,
+              type: "delivery",
+              data: { order_id: id, restaurant_name: restaurant.name, total: order?.total_amount }
+            });
+          }
+        } catch (e) {
+          console.log('Driver notification error:', e.message);
+        }
+      }
+
       return { id, status };
     },
     onSuccess: (data) => {
