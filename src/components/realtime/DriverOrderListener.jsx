@@ -15,30 +15,30 @@ export default function DriverOrderListener({ driverEmail, isOnline, onNewDelive
       // Check driver availability status first
       const drivers = await base44.entities.Driver.filter({ email: driverEmail });
       const currentDriver = drivers[0];
-      
+
       // Don't show orders if driver is on break or unavailable
-      if (currentDriver?.availability_status === 'on_break' || 
-          currentDriver?.availability_status === 'unavailable') {
+      if (currentDriver?.availability_status === 'on_break' ||
+        currentDriver?.availability_status === 'unavailable') {
         return;
       }
 
       // Get orders ready for pickup without assigned driver
-      const readyOrders = await base44.entities.Order.filter({ 
-        order_status: 'ready' 
+      const readyOrders = await base44.entities.Order.filter({
+        order_status: 'ready'
       }, '-created_date', 10);
 
       const availableOrders = readyOrders.filter(o => !o.driver_email);
       const prevIds = prevOrdersRef.current.map(o => o.id);
-      
+
       // Check for new available orders
       const newOrders = availableOrders.filter(o => !prevIds.includes(o.id));
 
       if (newOrders.length > 0) {
         // Check for batch opportunities
         const hasBatchOpportunity = newOrders.length > 1 || availableOrders.length > 1;
-        
+
         toast.success(`🚴 ${newOrders.length} New Delivery Available!`, {
-          description: hasBatchOpportunity 
+          description: hasBatchOpportunity
             ? `${newOrders[0].restaurant_name} • Batch bonus available!`
             : `${newOrders[0].restaurant_name} • ₹50 earning`,
           duration: 10000,
@@ -90,11 +90,11 @@ export default function DriverOrderListener({ driverEmail, isOnline, onNewDelive
     checkForAvailableOrders();
     checkAssignedOrders();
 
-    // Poll every 2 seconds for real-time updates
+    // Poll every 15 seconds (reduced from 2s to avoid rate limiting)
     pollIntervalRef.current = setInterval(() => {
       if (isOnline) checkForAvailableOrders();
       checkAssignedOrders();
-    }, 2000);
+    }, 15000);
 
     return () => {
       if (pollIntervalRef.current) {

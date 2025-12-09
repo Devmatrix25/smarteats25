@@ -16,10 +16,10 @@ export default function RestaurantOrderListener({ restaurantId, onNewOrder, onOr
       }, '-created_date', 20);
 
       const prevOrderIds = prevOrdersRef.current.map(o => o.id);
-      
+
       // Check for new orders
-      const newOrders = orders.filter(o => 
-        !prevOrderIds.includes(o.id) && 
+      const newOrders = orders.filter(o =>
+        !prevOrderIds.includes(o.id) &&
         ['placed', 'scheduled'].includes(o.order_status)
       );
 
@@ -58,8 +58,8 @@ export default function RestaurantOrderListener({ restaurantId, onNewOrder, onOr
     // Initial load
     checkForUpdates();
 
-    // Poll every 2 seconds for real-time
-    pollIntervalRef.current = setInterval(checkForUpdates, 2000);
+    // Poll every 15 seconds (reduced from 2s to avoid rate limiting)
+    pollIntervalRef.current = setInterval(checkForUpdates, 15000);
 
     return () => {
       if (pollIntervalRef.current) {

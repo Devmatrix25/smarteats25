@@ -26,7 +26,7 @@ export default function OrderStatusListener({ userEmail, onStatusChange }) {
         customer_email: userEmail
       }, '-created_date', 10);
 
-      const active = orders.filter(o => 
+      const active = orders.filter(o =>
         !['delivered', 'cancelled'].includes(o.order_status)
       );
 
@@ -43,18 +43,18 @@ export default function OrderStatusListener({ userEmail, onStatusChange }) {
               duration: 6000
             });
           }
-          
+
           if (onStatusChange) onStatusChange(order);
         }
         prevStatusRef.current[order.id] = order.order_status;
       });
 
       // Also check recently delivered orders for notifications
-      const recentlyDelivered = orders.filter(o => 
-        o.order_status === 'delivered' && 
+      const recentlyDelivered = orders.filter(o =>
+        o.order_status === 'delivered' &&
         !prevStatusRef.current[o.id]
       );
-      
+
       recentlyDelivered.forEach(order => {
         prevStatusRef.current[order.id] = order.order_status;
       });
@@ -71,8 +71,8 @@ export default function OrderStatusListener({ userEmail, onStatusChange }) {
     // Initial check
     checkForUpdates();
 
-    // Poll every 2 seconds for true real-time feel
-    pollIntervalRef.current = setInterval(checkForUpdates, 2000);
+    // Poll every 15 seconds (reduced from 2s to avoid rate limiting)
+    pollIntervalRef.current = setInterval(checkForUpdates, 15000);
 
     return () => {
       if (pollIntervalRef.current) {
