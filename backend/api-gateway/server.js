@@ -180,7 +180,7 @@ const optionalAuth = (req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    version: '2.0.1', // Updated version to verify deployment
+    version: '2.0.2', // Added notifications, loyalty, points endpoints
     timestamp: new Date().toISOString(),
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     services: {
@@ -578,6 +578,106 @@ app.delete('/api/orders/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Orders DELETE error:', error);
     res.status(500).json({ error: 'Failed to delete order' });
+  }
+});
+
+// ==============================================
+// NOTIFICATIONS ENDPOINTS
+// ==============================================
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const { user_email, _limit = 50 } = req.query;
+    const query = user_email ? { user_email } : {};
+    const notifications = await mongoose.connection.db.collection('notifications')
+      .find(query).sort({ created_date: -1 }).limit(parseInt(_limit)).toArray();
+    const transformed = notifications.map(n => ({ ...n, id: n._id.toString() }));
+    res.json({ data: transformed });
+  } catch (error) {
+    console.error('Notifications GET error:', error);
+    res.json({ data: [] });
+  }
+});
+
+app.post('/api/notifications', async (req, res) => {
+  try {
+    const notifData = { ...req.body, created_date: new Date(), is_read: false };
+    const result = await mongoose.connection.db.collection('notifications').insertOne(notifData);
+    res.json({ data: { ...notifData, id: result.insertedId.toString(), _id: result.insertedId } });
+  } catch (error) {
+    console.error('Notifications POST error:', error);
+    res.status(500).json({ error: 'Failed to create notification' });
+  }
+});
+
+// ==============================================
+// LOYALTY POINTS ENDPOINTS
+// ==============================================
+app.get('/api/loyaltypoints', async (req, res) => {
+  try {
+    const { user_email, _limit = 100 } = req.query;
+    const query = user_email ? { user_email } : {};
+    const points = await mongoose.connection.db.collection('loyaltypoints')
+      .find(query).limit(parseInt(_limit)).toArray();
+    const transformed = points.map(p => ({ ...p, id: p._id.toString() }));
+    res.json({ data: transformed });
+  } catch (error) {
+    console.error('LoyaltyPoints GET error:', error);
+    res.json({ data: [] });
+  }
+});
+
+app.post('/api/loyaltypoints', async (req, res) => {
+  try {
+    const data = { ...req.body, created_date: new Date() };
+    const result = await mongoose.connection.db.collection('loyaltypoints').insertOne(data);
+    res.json({ data: { ...data, id: result.insertedId.toString(), _id: result.insertedId } });
+  } catch (error) {
+    console.error('LoyaltyPoints POST error:', error);
+    res.status(500).json({ error: 'Failed to create loyalty points' });
+  }
+});
+
+app.patch('/api/loyaltypoints/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body, updated_date: new Date() };
+    await mongoose.connection.db.collection('loyaltypoints').updateOne(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: updateData }
+    );
+    const updated = await mongoose.connection.db.collection('loyaltypoints').findOne({ _id: new mongoose.Types.ObjectId(id) });
+    res.json({ data: { ...updated, id: updated._id.toString() } });
+  } catch (error) {
+    console.error('LoyaltyPoints PATCH error:', error);
+    res.status(500).json({ error: 'Failed to update loyalty points' });
+  }
+});
+
+// ==============================================
+// POINTS TRANSACTIONS ENDPOINTS
+// ==============================================
+app.get('/api/pointstransactions', async (req, res) => {
+  try {
+    const { user_email, _limit = 100 } = req.query;
+    const query = user_email ? { user_email } : {};
+    const transactions = await mongoose.connection.db.collection('pointstransactions')
+      .find(query).sort({ created_date: -1 }).limit(parseInt(_limit)).toArray();
+    const transformed = transactions.map(t => ({ ...t, id: t._id.toString() }));
+    res.json({ data: transformed });
+  } catch (error) {
+    console.error('PointsTransactions GET error:', error);
+    res.json({ data: [] });
+  }
+});
+
+app.post('/api/pointstransactions', async (req, res) => {
+  try {
+    const data = { ...req.body, created_date: new Date() };
+    const result = await mongoose.connection.db.collection('pointstransactions').insertOne(data);
+    res.json({ data: { ...data, id: result.insertedId.toString(), _id: result.insertedId } });
+  } catch (error) {
+    console.error('PointsTransactions POST error:', error);
+    res.status(500).json({ error: 'Failed to create points transaction' });
   }
 });
 
