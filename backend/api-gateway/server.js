@@ -181,7 +181,7 @@ const optionalAuth = (req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    version: '2.1.1', // FIXED: Removed auth from cart endpoints
+    version: '2.1.2', // Robust cart PATCH/DELETE with ObjectId validation
     timestamp: new Date().toISOString(),
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     services: {
@@ -468,16 +468,35 @@ app.post('/api/carts', async (req, res) => {
 app.patch('/api/carts/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    console.log('Updating cart:', id);
+    console.log('Updating cart:', id, 'Body keys:', Object.keys(req.body || {}));
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.error('Invalid cart ID format:', id);
+      return res.status(400).json({ error: 'Invalid cart ID format' });
+    }
+
     const updateData = { ...req.body, updated_date: new Date() };
-    await mongoose.connection.db.collection('carts').updateOne(
+    const result = await mongoose.connection.db.collection('carts').updateOne(
       { _id: new mongoose.Types.ObjectId(id) },
       { $set: updateData }
     );
-    const updated = await mongoose.connection.db.collection('carts').findOne({ _id: new mongoose.Types.ObjectId(id) });
-    res.json({ data: { ...updated, id: updated._id.toString() } });
+
+    console.log('Cart update result:', result.modifiedCount, 'modified');
+
+    // Return the updated data even if we can't refetch
+    if (result.modifiedCount > 0) {
+      const updated = await mongoose.connection.db.collection('carts').findOne({ _id: new mongoose.Types.ObjectId(id) });
+      if (updated) {
+        res.json({ data: { ...updated, id: updated._id.toString() } });
+      } else {
+        res.json({ data: { id, ...updateData } });
+      }
+    } else {
+      res.json({ data: { id, ...updateData } });
+    }
   } catch (error) {
-    console.error('Update cart error:', error);
+    console.error('Update cart error:', error.message);
     res.status(500).json({ error: 'Failed to update cart', details: error.message });
   }
 });
@@ -486,11 +505,18 @@ app.delete('/api/carts/:id', async (req, res) => {
   try {
     const { id } = req.params;
     console.log('Deleting cart:', id);
+
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.error('Invalid cart ID format:', id);
+      return res.status(400).json({ error: 'Invalid cart ID format' });
+    }
+
     await mongoose.connection.db.collection('carts').deleteOne({ _id: new mongoose.Types.ObjectId(id) });
     res.json({ success: true });
   } catch (error) {
-    console.error('Delete cart error:', error);
-    res.status(500).json({ error: 'Failed to delete cart' });
+    console.error('Delete cart error:', error.message);
+    res.status(500).json({ error: 'Failed to delete cart', details: error.message });
   }
 });
 
