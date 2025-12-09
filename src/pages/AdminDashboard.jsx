@@ -49,20 +49,22 @@ export default function AdminDashboard() {
   const { data: restaurants = [], isLoading: loadingRestaurants } = useQuery({
     queryKey: ['admin-restaurants'],
     queryFn: () => base44.entities.Restaurant.list(),
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 60000 // Cache for 60 seconds to prevent blinking
   });
 
   const { data: drivers = [], isLoading: loadingDrivers } = useQuery({
     queryKey: ['admin-drivers'],
     queryFn: () => base44.entities.Driver.list(),
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 60000 // Cache for 60 seconds to prevent blinking
   });
 
   const { data: orders = [], isLoading: loadingOrders, refetch: refetchOrders } = useQuery({
     queryKey: ['admin-orders'],
     queryFn: () => base44.entities.Order.list('-created_date', 100),
     enabled: !!user,
-    staleTime: 30000 // Cache for 30 seconds
+    staleTime: 60000 // Cache for 60 seconds to prevent blinking
   });
 
   // Mask customer data for privacy

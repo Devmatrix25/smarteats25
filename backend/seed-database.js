@@ -657,8 +657,51 @@ async function seedDatabase() {
         }
 
         // =============================================
-        // SUMMARY
+        // 3. CREATE FLASHMAN DRIVER
         // =============================================
+        console.log('🚗 Creating Flashman Driver...\n');
+
+        const flashmanPassword = await hashPassword('flashman123');
+        const flashmanUserResult = await db.collection('users').insertOne({
+            email: 'flashman@smarteats.com',
+            password: flashmanPassword,
+            role: 'driver',
+            profile: {
+                firstName: 'Flash',
+                lastName: 'Man'
+            },
+            isEmailVerified: true,
+            isActive: true,
+            approvalStatus: 'approved',
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+
+        await db.collection('drivers').insertOne({
+            email: 'flashman@smarteats.com',
+            name: 'Flashman',
+            phone: '+91 99999 88888',
+            vehicle_type: 'Motorcycle',
+            vehicle_number: 'KA-01-FL-0001',
+            license_number: 'DL-FLASH-2024',
+            status: 'approved',
+            is_online: true,
+            is_available: true,
+            current_latitude: 12.9716,
+            current_longitude: 77.5946,
+            total_deliveries: 150,
+            total_earnings: 15000,
+            average_rating: 4.9,
+            created_date: new Date(),
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+
+        console.log('   ✅ Flashman Driver created: flashman@smarteats.com / flashman123\n');
+
+        // =============================================
+        // SUMMARY
+        // ==============================================
         const userCount = await db.collection('users').countDocuments();
         const restaurantCount = await db.collection('restaurants').countDocuments();
         const menuItemCount = await db.collection('menuitems').countDocuments();
@@ -679,6 +722,10 @@ async function seedDatabase() {
         RESTAURANTS_DATA.forEach(r => {
             console.log(`   ${r.restaurant.name.padEnd(20)} ${r.ownerEmail.padEnd(28)} ${r.ownerPassword}`);
         });
+        console.log('');
+        console.log('🚗 DRIVER CREDENTIALS:');
+        console.log('-'.repeat(60));
+        console.log('   Flashman              flashman@smarteats.com       flashman123');
         console.log('='.repeat(60));
 
     } catch (error) {

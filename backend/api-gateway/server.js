@@ -641,6 +641,45 @@ app.post('/api/reviews', authenticateToken, async (req, res) => {
 });
 
 // ==============================================
+// FAVORITES ENDPOINTS (Fix for 500 error)
+// ==============================================
+app.get('/api/favorites', optionalAuth, async (req, res) => {
+  try {
+    const { user_email, _limit = 100 } = req.query;
+    const query = user_email ? { user_email } : {};
+    const favorites = await mongoose.connection.db.collection('favorites')
+      .find(query).limit(parseInt(_limit)).toArray();
+    const transformed = favorites.map(f => ({ ...f, id: f._id.toString() }));
+    res.json({ data: transformed });
+  } catch (error) {
+    console.error('Favorites GET error:', error);
+    res.json({ data: [] });
+  }
+});
+
+app.post('/api/favorites', authenticateToken, async (req, res) => {
+  try {
+    const favoriteData = { ...req.body, created_date: new Date() };
+    const result = await mongoose.connection.db.collection('favorites').insertOne(favoriteData);
+    res.json({ data: { ...favoriteData, id: result.insertedId.toString(), _id: result.insertedId } });
+  } catch (error) {
+    console.error('Favorites POST error:', error);
+    res.status(500).json({ error: 'Failed to create favorite' });
+  }
+});
+
+app.delete('/api/favorites/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await mongoose.connection.db.collection('favorites').deleteOne({ _id: new mongoose.Types.ObjectId(id) });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Favorites DELETE error:', error);
+    res.status(500).json({ error: 'Failed to delete favorite' });
+  }
+});
+
+// ==============================================
 // ADDRESS ENDPOINTS
 // ==============================================
 app.get('/api/addresss', authenticateToken, async (req, res) => {

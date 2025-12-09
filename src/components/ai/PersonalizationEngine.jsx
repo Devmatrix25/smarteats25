@@ -53,10 +53,19 @@ export default function PersonalizationEngine({ user, restaurants = [], orders =
     // Get reorder suggestions (past ordered restaurants)
     const reorderSuggestions = getReorderSuggestions(safeOrders, safeRestaurants);
 
-    // Get trending (highest rated, most orders)
+    // Get trending (prioritize Biryani, then highest rated)
     const trending = safeRestaurants
       .filter(r => (r.average_rating || 0) >= 4)
-      .sort((a, b) => (b.average_rating || 0) - (a.average_rating || 0))
+      .sort((a, b) => {
+        // Prioritize Biryani restaurants first
+        const aHasBiryani = (a.cuisine_type || []).some(c => c.toLowerCase().includes('biryani')) ||
+          (a.name || '').toLowerCase().includes('biryani');
+        const bHasBiryani = (b.cuisine_type || []).some(c => c.toLowerCase().includes('biryani')) ||
+          (b.name || '').toLowerCase().includes('biryani');
+        if (aHasBiryani && !bHasBiryani) return -1;
+        if (bHasBiryani && !aHasBiryani) return 1;
+        return (b.average_rating || 0) - (a.average_rating || 0);
+      })
       .slice(0, 6);
 
     // New arrivals (most recently created)
