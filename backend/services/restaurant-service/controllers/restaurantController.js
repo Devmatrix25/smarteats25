@@ -31,64 +31,101 @@ export const getRestaurants = async (req, res) => {
             minRating,
             isOpen,
             isFeatured,
-            limit = 20,
+            is_featured,
+            limit = 100,
             page = 1,
             sortBy = 'ratings.average',
-            sortOrder = 'desc'
+            sortOrder = 'desc',
+            status,
+            owner_email,
+            _sort,
+            _limit
         } = req.query;
 
-        let query = { status: 'active' };
+        // Build query - default to approved/active restaurants
+        let query = {};
+
+        // Handle status filter - accept both 'approved' and 'active'
+        if (status) {
+            query.status = status;
+        } else {
+            query.status = { $in: ['approved', 'active'] };
+        }
+
+        // Handle owner_email filter (for restaurant dashboard)
+        if (owner_email) {
+            query.owner_email = owner_email;
+        }
 
         // Search by name or description
         if (search) {
-            query.$text = { $search: search };
+            query.$or = [
+                { name: { $regex: search, $options: 'i' } },
+                { description: { $regex: search, $options: 'i' } }
+            ];
         }
 
-        // Filter by cuisine
+        // Filter by cuisine (support both 'cuisine' and 'cuisine_type')
         if (cuisine) {
-            query.cuisine = { $in: cuisine.split(',') };
+            query.$or = query.$or || [];
+            query.$or.push(
+                { cuisine: { $in: cuisine.split(',') } },
+                { cuisine_type: { $in: cuisine.split(',') } }
+            );
         }
 
         // Filter by city
         if (city) {
-            query['address.city'] = city;
+            query.$or = query.$or || [];
+            query.$or.push(
+                { 'address.city': city },
+                { city: city }
+            );
         }
 
         // Filter by minimum rating
         if (minRating) {
-            query['ratings.average'] = { $gte: parseFloat(minRating) };
+            query.$or = query.$or || [];
+            query.$or.push(
+                { 'ratings.average': { $gte: parseFloat(minRating) } },
+                { average_rating: { $gte: parseFloat(minRating) } }
+            );
         }
 
         // Filter by open status
         if (isOpen === 'true') {
-            query.isOpen = true;
+            query.$or = query.$or || [];
+            query.$or.push({ isOpen: true }, { is_open: true });
         }
 
-        // Filter by featured
-        if (isFeatured === 'true') {
-            query.isFeatured = true;
+        // Filter by featured (handle both camelCase and snake_case)
+        if (isFeatured === 'true' || is_featured === 'true') {
+            query.$or = query.$or || [];
+            query.$or.push({ isFeatured: true }, { is_featured: true });
         }
 
-        const skip = (page - 1) * limit;
+        const actualLimit = parseInt(_limit || limit);
+        const skip = (page - 1) * actualLimit;
         const sort = {};
         sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
 
         const [restaurants, total] = await Promise.all([
             Restaurant.find(query)
-                .select('-documents -menu') // Exclude sensitive data and large arrays
                 .sort(sort)
-                .limit(parseInt(limit))
+                .limit(actualLimit)
                 .skip(skip),
             Restaurant.countDocuments(query)
         ]);
 
+        // Return in format frontend expects
         res.json({
+            data: restaurants,
             restaurants,
             pagination: {
                 total,
                 page: parseInt(page),
-                limit: parseInt(limit),
-                pages: Math.ceil(total / limit)
+                limit: actualLimit,
+                pages: Math.ceil(total / actualLimit)
             }
         });
     } catch (error) {

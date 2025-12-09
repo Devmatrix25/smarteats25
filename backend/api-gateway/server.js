@@ -8,6 +8,7 @@ import rateLimit from 'express-rate-limit';
 import { createClient } from 'redis';
 import jwt from 'jsonwebtoken';
 import { createProxyMiddleware } from 'http-proxy-middleware';
+import mongoose from 'mongoose';
 
 dotenv.config();
 
@@ -205,6 +206,110 @@ app.use('/api/notifications', authenticateToken, createProxyMiddleware({
   pathRewrite: { '^/api/notifications': '' },
   ...proxyOptions,
 }));
+
+// ==============================================
+// DIRECT MONGODB HANDLERS (for entities without dedicated services)
+// ==============================================
+
+// Connect to MongoDB if not already connected
+if (mongoose.connection.readyState === 0) {
+  mongoose.connect(process.env.MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  }).then(() => console.log('✅ API Gateway connected to MongoDB'))
+    .catch(err => console.error('❌ MongoDB connection error:', err));
+}
+
+// Menu Items endpoint
+app.get('/api/menuitems', async (req, res) => {
+  try {
+    const { restaurant_id, _limit = 100 } = req.query;
+    const query = restaurant_id ? { restaurant_id } : {};
+    const items = await mongoose.connection.db.collection('menuitems').find(query).limit(parseInt(_limit)).toArray();
+    // Transform _id to id for frontend compatibility
+    const transformedItems = items.map(item => ({ ...item, id: item._id.toString() }));
+    res.json({ data: transformedItems });
+  } catch (error) {
+    console.error('Menu items error:', error);
+    res.json({ data: [] });
+  }
+});
+
+// Carts endpoint
+app.get('/api/carts', optionalAuth, async (req, res) => {
+  try {
+    const { customer_email, _limit = 100 } = req.query;
+    const query = customer_email ? { customer_email } : {};
+    const carts = await mongoose.connection.db.collection('carts').find(query).limit(parseInt(_limit)).toArray();
+    const transformedCarts = carts.map(cart => ({ ...cart, id: cart._id.toString() }));
+    res.json({ data: transformedCarts });
+  } catch (error) {
+    console.error('Carts error:', error);
+    res.json({ data: [] });
+  }
+});
+
+app.post('/api/carts', authenticateToken, async (req, res) => {
+  try {
+    const cartData = { ...req.body, created_date: new Date(), updated_date: new Date() };
+    const result = await mongoose.connection.db.collection('carts').insertOne(cartData);
+    res.json({ data: { ...cartData, id: result.insertedId.toString(), _id: result.insertedId } });
+  } catch (error) {
+    console.error('Create cart error:', error);
+    res.status(500).json({ error: 'Failed to create cart' });
+  }
+});
+
+app.patch('/api/carts/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body, updated_date: new Date() };
+    await mongoose.connection.db.collection('carts').updateOne(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: updateData }
+    );
+    res.json({ data: { id, ...updateData } });
+  } catch (error) {
+    console.error('Update cart error:', error);
+    res.status(500).json({ error: 'Failed to update cart' });
+  }
+});
+
+app.delete('/api/carts/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await mongoose.connection.db.collection('carts').deleteOne({ _id: new mongoose.Types.ObjectId(id) });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete cart error:', error);
+    res.status(500).json({ error: 'Failed to delete cart' });
+  }
+});
+
+// Reviews endpoint
+app.get('/api/reviews', async (req, res) => {
+  try {
+    const { restaurant_id, _limit = 100 } = req.query;
+    const query = restaurant_id ? { restaurant_id } : {};
+    const reviews = await mongoose.connection.db.collection('reviews').find(query).limit(parseInt(_limit)).toArray();
+    const transformedReviews = reviews.map(review => ({ ...review, id: review._id.toString() }));
+    res.json({ data: transformedReviews });
+  } catch (error) {
+    console.error('Reviews error:', error);
+    res.json({ data: [] });
+  }
+});
+
+app.post('/api/reviews', authenticateToken, async (req, res) => {
+  try {
+    const reviewData = { ...req.body, created_date: new Date() };
+    const result = await mongoose.connection.db.collection('reviews').insertOne(reviewData);
+    res.json({ data: { ...reviewData, id: result.insertedId.toString(), _id: result.insertedId } });
+  } catch (error) {
+    console.error('Create review error:', error);
+    res.status(500).json({ error: 'Failed to create review' });
+  }
+});
 
 // 404 handler
 app.use((req, res) => {
