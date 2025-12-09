@@ -181,7 +181,7 @@ const optionalAuth = (req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    version: '2.2.1', // Robust order creation with all field defaults
+    version: '2.2.2', // Fixed orderNumber camelCase for MongoDB index
     timestamp: new Date().toISOString(),
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     services: {
@@ -580,6 +580,7 @@ app.post('/api/orders', async (req, res) => {
     // Ensure all required fields have values
     const orderData = {
       order_number: orderNumber,
+      orderNumber: orderNumber,  // MongoDB has index on camelCase version
       customer_email: req.body.customer_email || 'guest@smarteats.com',
       customer_name: req.body.customer_name || 'Guest',
       restaurant_id: req.body.restaurant_id || '',
@@ -619,7 +620,9 @@ app.post('/api/orders', async (req, res) => {
       console.error('MongoDB insert error:', insertError.message);
       // If duplicate key error, try with new order number
       if (insertError.code === 11000) {
-        orderData.order_number = `SE${Date.now()}${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+        const newOrderNum = `SE${Date.now()}${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+        orderData.order_number = newOrderNum;
+        orderData.orderNumber = newOrderNum;
         result = await mongoose.connection.db.collection('orders').insertOne(orderData);
       } else {
         throw insertError;
