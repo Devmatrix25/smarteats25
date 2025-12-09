@@ -181,7 +181,7 @@ const optionalAuth = (req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    version: '2.2.0', // Removed auth from orders PATCH/DELETE, fixed cart quantity bugs
+    version: '2.2.1', // Robust order creation with all field defaults
     timestamp: new Date().toISOString(),
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     services: {
@@ -572,29 +572,69 @@ app.post('/api/orders', async (req, res) => {
 
     console.log('Creating order for:', req.body.customer_email);
 
-    // Generate order number if not provided
-    const orderNumber = req.body.order_number || `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+    // Generate unique order number - NEVER null
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substr(2, 6).toUpperCase();
+    const orderNumber = req.body.order_number || `SE${timestamp}${random}`;
 
+    // Ensure all required fields have values
     const orderData = {
-      ...req.body,
       order_number: orderNumber,
+      customer_email: req.body.customer_email || 'guest@smarteats.com',
+      customer_name: req.body.customer_name || 'Guest',
+      restaurant_id: req.body.restaurant_id || '',
+      restaurant_name: req.body.restaurant_name || '',
+      items: req.body.items || [],
+      subtotal: req.body.subtotal || 0,
+      delivery_fee: req.body.delivery_fee || 30,
+      taxes: req.body.taxes || 0,
+      discount: req.body.discount || 0,
+      total_amount: req.body.total_amount || 0,
+      payment_method: req.body.payment_method || 'cod',
+      payment_status: req.body.payment_status || 'pending',
+      order_status: req.body.order_status || 'placed',
+      delivery_address: req.body.delivery_address || '',
+      delivery_latitude: req.body.delivery_latitude || 12.9716,
+      delivery_longitude: req.body.delivery_longitude || 77.5946,
+      delivery_instructions: req.body.delivery_instructions || '',
+      is_scheduled: req.body.is_scheduled || false,
+      scheduled_date: req.body.scheduled_date || null,
+      scheduled_time: req.body.scheduled_time || null,
+      points_earned: req.body.points_earned || 0,
+      points_redeemed: req.body.points_redeemed || 0,
+      estimated_delivery_time: req.body.estimated_delivery_time || new Date(Date.now() + 45 * 60 * 1000).toISOString(),
       created_date: new Date(),
       updated_date: new Date(),
-      order_status: req.body.order_status || 'placed',
-      payment_status: req.body.payment_status || 'pending'
+      createdAt: new Date(),
+      updatedAt: new Date()
     };
 
     console.log('Inserting order with number:', orderNumber);
-    const result = await mongoose.connection.db.collection('orders').insertOne(orderData);
-    console.log('✅ Order created:', orderNumber, result.insertedId.toString());
+
+    // Insert with explicit error handling
+    let result;
+    try {
+      result = await mongoose.connection.db.collection('orders').insertOne(orderData);
+    } catch (insertError) {
+      console.error('MongoDB insert error:', insertError.message);
+      // If duplicate key error, try with new order number
+      if (insertError.code === 11000) {
+        orderData.order_number = `SE${Date.now()}${Math.random().toString(36).substr(2, 8).toUpperCase()}`;
+        result = await mongoose.connection.db.collection('orders').insertOne(orderData);
+      } else {
+        throw insertError;
+      }
+    }
+
+    console.log('✅ Order created:', orderData.order_number, result.insertedId.toString());
 
     res.json({ data: { ...orderData, id: result.insertedId.toString(), _id: result.insertedId } });
   } catch (error) {
     console.error('=== ORDER POST ERROR ===');
     console.error('Error name:', error.name);
     console.error('Error message:', error.message);
-    console.error('Error stack:', error.stack);
-    res.status(500).json({ error: 'Failed to create order', details: error.message });
+    console.error('Error code:', error.code);
+    res.status(500).json({ error: 'Failed to create order', details: error.message, code: error.code });
   }
 });
 
