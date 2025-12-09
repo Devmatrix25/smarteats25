@@ -61,7 +61,7 @@ export default function AdminDrivers() {
     }
   };
 
-  const { data: drivers = [], isLoading } = useQuery({
+  const { data: drivers = [], isLoading, refetch } = useQuery({
     queryKey: ['admin-drivers'],
     queryFn: async () => {
       const driversList = await base44.entities.Driver.list('-created_date');
@@ -76,7 +76,9 @@ export default function AdminDrivers() {
         return driversList;
       }
     },
-    enabled: !!user
+    enabled: !!user,
+    staleTime: 30000,
+    refetchOnWindowFocus: false
   });
 
   const updateMutation = useMutation({
@@ -288,7 +290,12 @@ export default function AdminDrivers() {
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold">Manage Drivers</h1>
-          <Badge variant="outline">{drivers.length} total</Badge>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => refetch()} className="rounded-xl">
+              🔄 Refresh
+            </Button>
+            <Badge variant="outline">{drivers.length} total</Badge>
+          </div>
         </div>
         <div className="relative mb-6">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
