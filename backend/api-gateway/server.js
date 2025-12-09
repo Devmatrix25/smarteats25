@@ -349,106 +349,7 @@ app.post('/api/restaurants', authenticateToken, async (req, res) => {
   }
 });
 
-// ==============================================
-// ORDER HANDLERS (Direct MongoDB for complete order flow)
-// ==============================================
-
-// GET orders (for both customer and restaurant)
-app.get('/api/orders', authenticateToken, async (req, res) => {
-  try {
-    const { customer_email, restaurant_id, _limit = 100, _sort } = req.query;
-    let query = {};
-
-    if (customer_email) {
-      query.customer_email = customer_email;
-    }
-    if (restaurant_id) {
-      query.restaurant_id = restaurant_id;
-    }
-
-    let sort = { created_date: -1 };
-    if (_sort && _sort.startsWith('-')) {
-      const field = _sort.substring(1);
-      sort = { [field]: -1 };
-    }
-
-    const orders = await mongoose.connection.db.collection('orders')
-      .find(query).sort(sort).limit(parseInt(_limit)).toArray();
-
-    const transformed = orders.map(o => ({ ...o, id: o._id.toString() }));
-    res.json({ data: transformed });
-  } catch (error) {
-    console.error('Orders error:', error);
-    res.json({ data: [] });
-  }
-});
-
-// GET single order
-app.get('/api/orders/:id', authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const order = await mongoose.connection.db.collection('orders')
-      .findOne({ _id: new mongoose.Types.ObjectId(id) });
-
-    if (order) {
-      res.json({ ...order, id: order._id.toString() });
-    } else {
-      res.status(404).json({ error: 'Order not found' });
-    }
-  } catch (error) {
-    console.error('Get order error:', error);
-    res.status(500).json({ error: 'Failed to get order' });
-  }
-});
-
-// POST create order
-app.post('/api/orders', authenticateToken, async (req, res) => {
-  try {
-    // Generate order number
-    const count = await mongoose.connection.db.collection('orders').countDocuments();
-    const orderNumber = `SE${Date.now().toString().slice(-6)}${String(count + 1).padStart(4, '0')}`;
-
-    const orderData = {
-      ...req.body,
-      order_number: orderNumber,
-      order_status: req.body.order_status || 'placed',
-      created_date: new Date(),
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-
-    const result = await mongoose.connection.db.collection('orders').insertOne(orderData);
-    const createdOrder = { ...orderData, id: result.insertedId.toString(), _id: result.insertedId };
-
-    console.log('📦 New order created:', orderNumber);
-    res.json({ data: createdOrder });
-  } catch (error) {
-    console.error('Create order error:', error);
-    res.status(500).json({ error: 'Failed to create order' });
-  }
-});
-
-// PATCH update order (status updates)
-app.patch('/api/orders/:id', authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const updateData = { ...req.body, updatedAt: new Date() };
-
-    await mongoose.connection.db.collection('orders').updateOne(
-      { _id: new mongoose.Types.ObjectId(id) },
-      { $set: updateData }
-    );
-
-    const updated = await mongoose.connection.db.collection('orders')
-      .findOne({ _id: new mongoose.Types.ObjectId(id) });
-
-    console.log('📝 Order updated:', id, 'Status:', updated?.order_status);
-    res.json({ data: { ...updated, id: updated._id.toString() } });
-  } catch (error) {
-    console.error('Update order error:', error);
-    res.status(500).json({ error: 'Failed to update order' });
-  }
-});
+// NOTE: Order endpoints moved below carts section - using optionalAuth for better compatibility
 
 app.use('/api/delivery', authenticateToken, createProxyMiddleware({
   target: services.delivery,
@@ -619,19 +520,29 @@ app.get('/api/orders', optionalAuth, async (req, res) => {
   }
 });
 
-app.post('/api/orders', authenticateToken, async (req, res) => {
+app.post('/api/orders', optionalAuth, async (req, res) => {
   try {
+    console.log('Creating order:', JSON.stringify(req.body, null, 2));
+
+    // Generate order number if not provided
+    const orderNumber = req.body.order_number || `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
+
     const orderData = {
       ...req.body,
+      order_number: orderNumber,
       created_date: new Date(),
       updated_date: new Date(),
-      order_status: req.body.order_status || 'placed'
+      order_status: req.body.order_status || 'placed',
+      payment_status: req.body.payment_status || 'pending'
     };
+
     const result = await mongoose.connection.db.collection('orders').insertOne(orderData);
+    console.log('Order created successfully:', result.insertedId.toString());
+
     res.json({ data: { ...orderData, id: result.insertedId.toString(), _id: result.insertedId } });
   } catch (error) {
-    console.error('Orders POST error:', error);
-    res.status(500).json({ error: 'Failed to create order' });
+    console.error('Orders POST error:', error.message, error.stack);
+    res.status(500).json({ error: 'Failed to create order', details: error.message });
   }
 });
 
