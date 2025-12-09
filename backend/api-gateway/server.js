@@ -129,10 +129,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Helmet security headers (after CORS)
+// Helmet security headers (after CORS) - CSP disabled for API
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
-  crossOriginOpenerPolicy: { policy: "unsafe-none" }
+  crossOriginOpenerPolicy: { policy: "unsafe-none" },
+  contentSecurityPolicy: false // Disable CSP for API
 }));
 
 app.use(express.json({ limit: '10mb' }));
@@ -180,7 +181,7 @@ const optionalAuth = (req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    version: '2.0.3', // Debug logging for order POST
+    version: '2.0.4', // Disabled CSP, added debug logging
     timestamp: new Date().toISOString(),
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     services: {
