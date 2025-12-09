@@ -180,7 +180,9 @@ const optionalAuth = (req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
+    version: '2.0.1', // Updated version to verify deployment
     timestamp: new Date().toISOString(),
+    mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     services: {
       redis: redisClient?.isOpen ? 'connected' : 'disconnected',
     },
@@ -520,9 +522,15 @@ app.get('/api/orders', optionalAuth, async (req, res) => {
   }
 });
 
-app.post('/api/orders', optionalAuth, async (req, res) => {
+app.post('/api/orders', async (req, res) => {
   try {
-    console.log('Creating order:', JSON.stringify(req.body, null, 2));
+    // Check if MongoDB is connected
+    if (!mongoose.connection.db) {
+      console.error('MongoDB not connected!');
+      return res.status(503).json({ error: 'Database not available, please try again' });
+    }
+
+    console.log('Creating order for:', req.body.customer_email);
 
     // Generate order number if not provided
     const orderNumber = req.body.order_number || `ORD-${Date.now()}-${Math.random().toString(36).substr(2, 4).toUpperCase()}`;
@@ -537,11 +545,11 @@ app.post('/api/orders', optionalAuth, async (req, res) => {
     };
 
     const result = await mongoose.connection.db.collection('orders').insertOne(orderData);
-    console.log('Order created successfully:', result.insertedId.toString());
+    console.log('✅ Order created:', orderNumber, result.insertedId.toString());
 
     res.json({ data: { ...orderData, id: result.insertedId.toString(), _id: result.insertedId } });
   } catch (error) {
-    console.error('Orders POST error:', error.message, error.stack);
+    console.error('Orders POST error:', error.message);
     res.status(500).json({ error: 'Failed to create order', details: error.message });
   }
 });
