@@ -85,41 +85,47 @@ export default function DriverDashboard() {
     try {
       const userData = await base44.auth.me();
       setUser(userData);
-      loadDriver(userData.email);
+      loadDriver(userData);
     } catch (e) {
       navigate(createPageUrl("Index"));
     }
   };
 
-  const loadDriver = async (email) => {
+  const loadDriver = async (userData) => {
+    const email = userData.email;
     try {
       const drivers = await base44.entities.Driver.filter({ email: email });
       if (drivers.length > 0) {
         setDriver(drivers[0]);
       } else {
-        // Auto-create driver record for known driver emails
-        const driverEmails = ['driver@demo.com', 'flashman@smarteats.com'];
-        if (driverEmails.includes(email)) {
-          const isFlashman = email === 'flashman@smarteats.com';
-          const newDriver = await base44.entities.Driver.create({
-            name: isFlashman ? 'Flashman' : 'Demo Driver',
-            email: email,
-            phone: isFlashman ? '+91 99999 88888' : '9876543210',
-            vehicle_type: isFlashman ? 'Motorcycle' : 'bike',
-            vehicle_number: isFlashman ? 'KA-01-FL-0001' : 'KA-01-AB-1234',
-            license_number: isFlashman ? 'DL-FLASH-2024' : 'DL-DEMO-2024',
-            city: 'Bangalore',
-            status: 'approved',
-            is_online: true,
-            is_available: true,
-            average_rating: isFlashman ? 4.9 : 0,
-            total_deliveries: 0,
-            total_earnings: 0,
-            current_latitude: 12.9716,
-            current_longitude: 77.5946
-          });
-          setDriver(newDriver);
-          toast.success(`Welcome ${isFlashman ? 'Flashman' : 'Demo Driver'}! 🚀`);
+        // Auto-create driver record for ANY user with driver role
+        const isDemo = email === 'driver@demo.com';
+        const isFlashman = email === 'flashman@smarteats.com';
+        const isAutoApproved = isDemo || isFlashman;
+
+        const newDriver = await base44.entities.Driver.create({
+          name: userData.full_name || userData.profile?.firstName || email.split('@')[0],
+          email: email,
+          phone: userData.phone || '9876543210',
+          vehicle_type: isFlashman ? 'Motorcycle' : 'bike',
+          vehicle_number: 'KA-00-XX-0000',
+          license_number: 'DL-PENDING-2024',
+          city: 'Bangalore',
+          status: isAutoApproved ? 'approved' : 'pending',
+          is_online: isAutoApproved,
+          is_available: isAutoApproved,
+          average_rating: 0,
+          total_deliveries: 0,
+          total_earnings: 0,
+          current_latitude: 12.9716,
+          current_longitude: 77.5946
+        });
+        setDriver(newDriver);
+
+        if (isAutoApproved) {
+          toast.success(`Welcome ${newDriver.name}! 🚀`);
+        } else {
+          toast.info("Your driver profile has been created and is pending admin approval.");
         }
       }
     } catch (e) {
