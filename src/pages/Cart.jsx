@@ -129,21 +129,35 @@ export default function Cart() {
     if (existingIndex < 0) return;
 
     let newItems = [...cart.items];
-    newItems[existingIndex].quantity += delta;
+    const newQuantity = newItems[existingIndex].quantity + delta;
 
-    if (newItems[existingIndex].quantity <= 0) {
+    // Prevent negative quantities
+    if (newQuantity < 0) return;
+
+    if (newQuantity === 0) {
+      // Remove item from cart
       newItems = newItems.filter((i, idx) => idx !== existingIndex);
+    } else {
+      newItems[existingIndex].quantity = newQuantity;
     }
 
-    const subtotal = newItems.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+    const subtotal = newItems.reduce((acc, i) => acc + (i.price * Math.max(0, i.quantity)), 0);
 
-    if (newItems.length === 0) {
-      await base44.entities.Cart.delete(cart.id);
-      setCart(null);
-    } else {
-      const updatedCart = { ...cart, items: newItems, subtotal };
-      await base44.entities.Cart.update(cart.id, updatedCart);
-      setCart(updatedCart);
+    try {
+      if (newItems.length === 0) {
+        await base44.entities.Cart.delete(cart.id);
+        setCart(null);
+        toast.success("Cart cleared");
+      } else {
+        const updatedCart = { ...cart, items: newItems, subtotal };
+        await base44.entities.Cart.update(cart.id, updatedCart);
+        setCart(updatedCart);
+      }
+    } catch (error) {
+      console.error("Failed to update cart:", error);
+      toast.error("Failed to update cart. Please try again.");
+      // Reload cart from server
+      loadCart(user?.email);
     }
   };
 
