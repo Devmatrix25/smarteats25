@@ -68,7 +68,7 @@ export default function RestaurantDashboard() {
     queryKey: ['restaurant-orders', restaurant?.id],
     queryFn: () => base44.entities.Order.filter({ restaurant_id: restaurant.id }, '-created_date'),
     enabled: !!restaurant?.id,
-    refetchInterval: 3000 // Real-time updates every 3 seconds
+    staleTime: 30000 // Cache for 30 seconds, use manual refresh
   });
 
   // Check for restaurant status updates (pending -> approved)
@@ -79,7 +79,7 @@ export default function RestaurantDashboard() {
       return restaurants[0];
     },
     enabled: !!restaurant?.id && restaurant?.status === 'pending',
-    refetchInterval: 5000
+    staleTime: 30000
   });
 
   useEffect(() => {

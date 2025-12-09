@@ -1,12 +1,60 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Star, Clock, MapPin, Heart, Sparkles, Flame, Leaf, Percent } from 'lucide-react';
 import { createPageUrl } from '@/utils';
 import { cn } from '@/lib/utils';
+import { base44 } from '@/api/base44Client';
+import { toast } from 'sonner';
 
-const PremiumRestaurantCard = ({ restaurant, index = 0 }) => {
+const PremiumRestaurantCard = ({ restaurant, index = 0, user, favorites = [], onFavoriteChange }) => {
     const [isLiked, setIsLiked] = React.useState(false);
+    const [isLoading, setIsLoading] = React.useState(false);
+
+    // Check if restaurant is in favorites
+    useEffect(() => {
+        if (favorites && favorites.length > 0) {
+            const isFav = favorites.some(f => f.restaurant_id === restaurant.id);
+            setIsLiked(isFav);
+        }
+    }, [favorites, restaurant.id]);
+
+    const handleFavoriteClick = async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!user) {
+            toast.error("Please login to save favorites");
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            if (isLiked) {
+                // Remove from favorites
+                const fav = favorites.find(f => f.restaurant_id === restaurant.id);
+                if (fav) {
+                    await base44.entities.Favorite.delete(fav.id);
+                }
+                toast.success("Removed from favorites");
+            } else {
+                // Add to favorites
+                await base44.entities.Favorite.create({
+                    user_email: user.email,
+                    restaurant_id: restaurant.id,
+                    restaurant_name: restaurant.name
+                });
+                toast.success("Added to favorites! ❤️");
+            }
+            setIsLiked(!isLiked);
+            if (onFavoriteChange) onFavoriteChange();
+        } catch (error) {
+            console.error('Favorite error:', error);
+            toast.error("Failed to update favorites");
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <motion.div
@@ -33,6 +81,16 @@ const PremiumRestaurantCard = ({ restaurant, index = 0 }) => {
 
                         {/* Top Badges */}
                         <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+                            {restaurant.is_open === false && (
+                                <motion.span
+                                    className="flex items-center gap-1 px-2.5 py-1 bg-red-500 rounded-full text-white text-xs font-bold shadow-lg"
+                                    initial={{ scale: 0 }}
+                                    animate={{ scale: 1 }}
+                                    transition={{ delay: 0.1 }}
+                                >
+                                    Closed
+                                </motion.span>
+                            )}
                             {restaurant.is_promoted && (
                                 <motion.span
                                     className="flex items-center gap-1 px-2.5 py-1 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full text-white text-xs font-bold shadow-lg"
@@ -70,13 +128,14 @@ const PremiumRestaurantCard = ({ restaurant, index = 0 }) => {
 
                         {/* Favorite Button */}
                         <motion.button
-                            className="absolute top-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg z-10"
+                            className={cn(
+                                "absolute top-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg z-10",
+                                isLoading && "opacity-50"
+                            )}
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setIsLiked(!isLiked);
-                            }}
+                            onClick={handleFavoriteClick}
+                            disabled={isLoading}
                         >
                             <motion.div
                                 animate={isLiked ? { scale: [1, 1.3, 1] } : {}}

@@ -177,17 +177,220 @@ app.use('/api/auth', createProxyMiddleware({
   ...proxyOptions,
 }));
 
-app.use('/api/restaurants', optionalAuth, createProxyMiddleware({
-  target: services.restaurant,
-  pathRewrite: { '^/api/restaurants': '' },
-  ...proxyOptions,
-}));
+// ==============================================
+// RESTAURANT HANDLERS (Direct MongoDB for better control)
+// ==============================================
 
-app.use('/api/orders', authenticateToken, createProxyMiddleware({
-  target: services.order,
-  pathRewrite: { '^/api/orders': '' },
-  ...proxyOptions,
-}));
+// GET all restaurants
+app.get('/api/restaurants', optionalAuth, async (req, res) => {
+  try {
+    const { owner_email, status, is_featured, id, _limit = 100 } = req.query;
+    let query = {};
+
+    // Filter by specific ID if provided
+    if (id) {
+      try {
+        query._id = new mongoose.Types.ObjectId(id);
+      } catch (e) {
+        // If not a valid ObjectId, return empty
+        res.json({ data: [] });
+        return;
+      }
+    }
+
+    // Default to approved/active status for customers
+    if (status) {
+      query.status = status;
+    } else if (!owner_email && !id) {
+      query.status = { $in: ['approved', 'active'] };
+    }
+
+    if (owner_email) {
+      query.owner_email = owner_email;
+    }
+
+    if (is_featured === 'true') {
+      query.is_featured = true;
+    }
+
+    const restaurants = await mongoose.connection.db.collection('restaurants')
+      .find(query).limit(parseInt(_limit)).toArray();
+
+    // Transform _id to id for frontend
+    const transformed = restaurants.map(r => ({ ...r, id: r._id.toString() }));
+    res.json({ data: transformed, restaurants: transformed });
+  } catch (error) {
+    console.error('Restaurants error:', error);
+    res.json({ data: [], restaurants: [] });
+  }
+});
+
+// GET single restaurant by ID
+app.get('/api/restaurants/:id', optionalAuth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    let restaurant;
+
+    // Try ObjectId first, then string ID
+    try {
+      restaurant = await mongoose.connection.db.collection('restaurants')
+        .findOne({ _id: new mongoose.Types.ObjectId(id) });
+    } catch (e) {
+      restaurant = await mongoose.connection.db.collection('restaurants')
+        .findOne({ id: id });
+    }
+
+    if (restaurant) {
+      res.json({ ...restaurant, id: restaurant._id.toString() });
+    } else {
+      res.status(404).json({ error: 'Restaurant not found' });
+    }
+  } catch (error) {
+    console.error('Get restaurant error:', error);
+    res.status(500).json({ error: 'Failed to get restaurant' });
+  }
+});
+
+// PATCH restaurant (for status updates, open/close toggle)
+app.patch('/api/restaurants/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body, updated_date: new Date() };
+
+    await mongoose.connection.db.collection('restaurants').updateOne(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: updateData }
+    );
+
+    const updated = await mongoose.connection.db.collection('restaurants')
+      .findOne({ _id: new mongoose.Types.ObjectId(id) });
+
+    res.json({ data: { ...updated, id: updated._id.toString() } });
+  } catch (error) {
+    console.error('Update restaurant error:', error);
+    res.status(500).json({ error: 'Failed to update restaurant' });
+  }
+});
+
+// POST create restaurant
+app.post('/api/restaurants', authenticateToken, async (req, res) => {
+  try {
+    const restaurantData = {
+      ...req.body,
+      status: 'pending',
+      created_date: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const result = await mongoose.connection.db.collection('restaurants').insertOne(restaurantData);
+    res.json({ data: { ...restaurantData, id: result.insertedId.toString(), _id: result.insertedId } });
+  } catch (error) {
+    console.error('Create restaurant error:', error);
+    res.status(500).json({ error: 'Failed to create restaurant' });
+  }
+});
+
+// ==============================================
+// ORDER HANDLERS (Direct MongoDB for complete order flow)
+// ==============================================
+
+// GET orders (for both customer and restaurant)
+app.get('/api/orders', authenticateToken, async (req, res) => {
+  try {
+    const { customer_email, restaurant_id, _limit = 100, _sort } = req.query;
+    let query = {};
+
+    if (customer_email) {
+      query.customer_email = customer_email;
+    }
+    if (restaurant_id) {
+      query.restaurant_id = restaurant_id;
+    }
+
+    let sort = { created_date: -1 };
+    if (_sort && _sort.startsWith('-')) {
+      const field = _sort.substring(1);
+      sort = { [field]: -1 };
+    }
+
+    const orders = await mongoose.connection.db.collection('orders')
+      .find(query).sort(sort).limit(parseInt(_limit)).toArray();
+
+    const transformed = orders.map(o => ({ ...o, id: o._id.toString() }));
+    res.json({ data: transformed });
+  } catch (error) {
+    console.error('Orders error:', error);
+    res.json({ data: [] });
+  }
+});
+
+// GET single order
+app.get('/api/orders/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const order = await mongoose.connection.db.collection('orders')
+      .findOne({ _id: new mongoose.Types.ObjectId(id) });
+
+    if (order) {
+      res.json({ ...order, id: order._id.toString() });
+    } else {
+      res.status(404).json({ error: 'Order not found' });
+    }
+  } catch (error) {
+    console.error('Get order error:', error);
+    res.status(500).json({ error: 'Failed to get order' });
+  }
+});
+
+// POST create order
+app.post('/api/orders', authenticateToken, async (req, res) => {
+  try {
+    // Generate order number
+    const count = await mongoose.connection.db.collection('orders').countDocuments();
+    const orderNumber = `SE${Date.now().toString().slice(-6)}${String(count + 1).padStart(4, '0')}`;
+
+    const orderData = {
+      ...req.body,
+      order_number: orderNumber,
+      order_status: req.body.order_status || 'placed',
+      created_date: new Date(),
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    const result = await mongoose.connection.db.collection('orders').insertOne(orderData);
+    const createdOrder = { ...orderData, id: result.insertedId.toString(), _id: result.insertedId };
+
+    console.log('📦 New order created:', orderNumber);
+    res.json({ data: createdOrder });
+  } catch (error) {
+    console.error('Create order error:', error);
+    res.status(500).json({ error: 'Failed to create order' });
+  }
+});
+
+// PATCH update order (status updates)
+app.patch('/api/orders/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body, updatedAt: new Date() };
+
+    await mongoose.connection.db.collection('orders').updateOne(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: updateData }
+    );
+
+    const updated = await mongoose.connection.db.collection('orders')
+      .findOne({ _id: new mongoose.Types.ObjectId(id) });
+
+    console.log('📝 Order updated:', id, 'Status:', updated?.order_status);
+    res.json({ data: { ...updated, id: updated._id.toString() } });
+  } catch (error) {
+    console.error('Update order error:', error);
+    res.status(500).json({ error: 'Failed to update order' });
+  }
+});
 
 app.use('/api/delivery', authenticateToken, createProxyMiddleware({
   target: services.delivery,
@@ -201,11 +404,59 @@ app.use('/api/payments', authenticateToken, createProxyMiddleware({
   ...proxyOptions,
 }));
 
-app.use('/api/notifications', authenticateToken, createProxyMiddleware({
-  target: services.notification,
-  pathRewrite: { '^/api/notifications': '' },
-  ...proxyOptions,
-}));
+// ==============================================
+// NOTIFICATION HANDLERS (Direct MongoDB)
+// ==============================================
+
+// GET notifications
+app.get('/api/notifications', authenticateToken, async (req, res) => {
+  try {
+    const { user_email, _limit = 50 } = req.query;
+    const query = user_email ? { user_email } : {};
+
+    const notifications = await mongoose.connection.db.collection('notifications')
+      .find(query).sort({ created_date: -1 }).limit(parseInt(_limit)).toArray();
+
+    const transformed = notifications.map(n => ({ ...n, id: n._id.toString() }));
+    res.json({ data: transformed });
+  } catch (error) {
+    console.error('Notifications error:', error);
+    res.json({ data: [] });
+  }
+});
+
+// POST create notification
+app.post('/api/notifications', authenticateToken, async (req, res) => {
+  try {
+    const notificationData = {
+      ...req.body,
+      is_read: false,
+      created_date: new Date(),
+      createdAt: new Date()
+    };
+
+    const result = await mongoose.connection.db.collection('notifications').insertOne(notificationData);
+    res.json({ data: { ...notificationData, id: result.insertedId.toString() } });
+  } catch (error) {
+    console.error('Create notification error:', error);
+    res.status(500).json({ error: 'Failed to create notification' });
+  }
+});
+
+// PATCH update notification (mark as read)
+app.patch('/api/notifications/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await mongoose.connection.db.collection('notifications').updateOne(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: { ...req.body, updatedAt: new Date() } }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Update notification error:', error);
+    res.status(500).json({ error: 'Failed to update notification' });
+  }
+});
 
 // ==============================================
 // DIRECT MONGODB HANDLERS (for entities without dedicated services)
@@ -308,6 +559,224 @@ app.post('/api/reviews', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Create review error:', error);
     res.status(500).json({ error: 'Failed to create review' });
+  }
+});
+
+// ==============================================
+// ADDRESS ENDPOINTS
+// ==============================================
+app.get('/api/addresss', authenticateToken, async (req, res) => {
+  try {
+    const { user_email, _limit = 50 } = req.query;
+    const query = user_email ? { user_email } : {};
+    const addresses = await mongoose.connection.db.collection('addresses')
+      .find(query).limit(parseInt(_limit)).toArray();
+    const transformed = addresses.map(a => ({ ...a, id: a._id.toString() }));
+    res.json({ data: transformed });
+  } catch (error) {
+    console.error('Addresses error:', error);
+    res.json({ data: [] });
+  }
+});
+
+app.post('/api/addresss', authenticateToken, async (req, res) => {
+  try {
+    const addressData = { ...req.body, created_date: new Date() };
+    const result = await mongoose.connection.db.collection('addresses').insertOne(addressData);
+    res.json({ data: { ...addressData, id: result.insertedId.toString() } });
+  } catch (error) {
+    console.error('Create address error:', error);
+    res.status(500).json({ error: 'Failed to create address' });
+  }
+});
+
+app.patch('/api/addresss/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await mongoose.connection.db.collection('addresses').updateOne(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: { ...req.body, updated_date: new Date() } }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Update address error:', error);
+    res.status(500).json({ error: 'Failed to update address' });
+  }
+});
+
+app.delete('/api/addresss/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await mongoose.connection.db.collection('addresses').deleteOne({ _id: new mongoose.Types.ObjectId(id) });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete address error:', error);
+    res.status(500).json({ error: 'Failed to delete address' });
+  }
+});
+
+// ==============================================
+// LOYALTY POINTS ENDPOINTS
+// ==============================================
+app.get('/api/loyaltypointss', authenticateToken, async (req, res) => {
+  try {
+    const { user_email, _limit = 50 } = req.query;
+    const query = user_email ? { user_email } : {};
+    const points = await mongoose.connection.db.collection('loyaltypoints')
+      .find(query).limit(parseInt(_limit)).toArray();
+    const transformed = points.map(p => ({ ...p, id: p._id.toString() }));
+    res.json({ data: transformed });
+  } catch (error) {
+    console.error('Loyalty points error:', error);
+    res.json({ data: [] });
+  }
+});
+
+app.post('/api/loyaltypointss', authenticateToken, async (req, res) => {
+  try {
+    const data = { ...req.body, created_date: new Date() };
+    const result = await mongoose.connection.db.collection('loyaltypoints').insertOne(data);
+    res.json({ data: { ...data, id: result.insertedId.toString() } });
+  } catch (error) {
+    console.error('Create loyalty points error:', error);
+    res.status(500).json({ error: 'Failed to create loyalty points' });
+  }
+});
+
+app.patch('/api/loyaltypointss/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await mongoose.connection.db.collection('loyaltypoints').updateOne(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: req.body }
+    );
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Update loyalty points error:', error);
+    res.status(500).json({ error: 'Failed to update loyalty points' });
+  }
+});
+
+// ==============================================
+// POINTS TRANSACTION ENDPOINTS
+// ==============================================
+app.get('/api/pointstransactions', authenticateToken, async (req, res) => {
+  try {
+    const { user_email, _limit = 50 } = req.query;
+    const query = user_email ? { user_email } : {};
+    const txns = await mongoose.connection.db.collection('pointstransactions')
+      .find(query).sort({ created_date: -1 }).limit(parseInt(_limit)).toArray();
+    const transformed = txns.map(t => ({ ...t, id: t._id.toString() }));
+    res.json({ data: transformed });
+  } catch (error) {
+    console.error('Points transactions error:', error);
+    res.json({ data: [] });
+  }
+});
+
+app.post('/api/pointstransactions', authenticateToken, async (req, res) => {
+  try {
+    const data = { ...req.body, created_date: new Date() };
+    const result = await mongoose.connection.db.collection('pointstransactions').insertOne(data);
+    res.json({ data: { ...data, id: result.insertedId.toString() } });
+  } catch (error) {
+    console.error('Create points transaction error:', error);
+    res.status(500).json({ error: 'Failed to create points transaction' });
+  }
+});
+
+// ==============================================
+// FAVORITES ENDPOINTS
+// ==============================================
+app.get('/api/favorites', authenticateToken, async (req, res) => {
+  try {
+    const { user_email, _limit = 50 } = req.query;
+    const query = user_email ? { user_email } : {};
+    const favorites = await mongoose.connection.db.collection('favorites')
+      .find(query).limit(parseInt(_limit)).toArray();
+    const transformed = favorites.map(f => ({ ...f, id: f._id.toString() }));
+    res.json({ data: transformed });
+  } catch (error) {
+    console.error('Favorites error:', error);
+    res.json({ data: [] });
+  }
+});
+
+app.post('/api/favorites', authenticateToken, async (req, res) => {
+  try {
+    const data = { ...req.body, created_date: new Date() };
+    const result = await mongoose.connection.db.collection('favorites').insertOne(data);
+    res.json({ data: { ...data, id: result.insertedId.toString() } });
+  } catch (error) {
+    console.error('Create favorite error:', error);
+    res.status(500).json({ error: 'Failed to create favorite' });
+  }
+});
+
+app.delete('/api/favorites/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await mongoose.connection.db.collection('favorites').deleteOne({ _id: new mongoose.Types.ObjectId(id) });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete favorite error:', error);
+    res.status(500).json({ error: 'Failed to delete favorite' });
+  }
+});
+
+// Delete favorite by restaurant_id and user_email
+app.delete('/api/favorites', authenticateToken, async (req, res) => {
+  try {
+    const { restaurant_id, user_email } = req.query;
+    await mongoose.connection.db.collection('favorites').deleteOne({ restaurant_id, user_email });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete favorite error:', error);
+    res.status(500).json({ error: 'Failed to delete favorite' });
+  }
+});
+
+// ==============================================
+// SEARCH ENDPOINT (Restaurants + Menu Items)
+// ==============================================
+app.get('/api/search', optionalAuth, async (req, res) => {
+  try {
+    const { q, _limit = 50 } = req.query;
+    if (!q || q.length < 2) {
+      res.json({ restaurants: [], menuItems: [] });
+      return;
+    }
+
+    const searchRegex = { $regex: q, $options: 'i' };
+
+    // Search restaurants
+    const restaurants = await mongoose.connection.db.collection('restaurants')
+      .find({
+        status: { $in: ['approved', 'active'] },
+        $or: [
+          { name: searchRegex },
+          { description: searchRegex },
+          { cuisine_type: searchRegex }
+        ]
+      }).limit(parseInt(_limit)).toArray();
+
+    // Search menu items
+    const menuItems = await mongoose.connection.db.collection('menuitems')
+      .find({
+        $or: [
+          { name: searchRegex },
+          { description: searchRegex },
+          { category: searchRegex }
+        ]
+      }).limit(parseInt(_limit)).toArray();
+
+    res.json({
+      restaurants: restaurants.map(r => ({ ...r, id: r._id.toString() })),
+      menuItems: menuItems.map(m => ({ ...m, id: m._id.toString() }))
+    });
+  } catch (error) {
+    console.error('Search error:', error);
+    res.json({ restaurants: [], menuItems: [] });
   }
 });
 
