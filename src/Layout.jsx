@@ -24,6 +24,8 @@ export default function Layout({ children, currentPageName }) {
   const { user, logout: authLogout } = useAuth();
   const [cartCount, setCartCount] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -133,10 +135,47 @@ export default function Layout({ children, currentPageName }) {
 
               {/* Right Side */}
               <div className="flex items-center gap-3">
-                <Button variant="ghost" size="icon" className="relative">
-                  <Bell className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#FF4D4F] rounded-full text-[10px] text-white flex items-center justify-center">3</span>
-                </Button>
+                {/* Notification Bell - Clickable Dropdown */}
+                <DropdownMenu open={showNotifications} onOpenChange={setShowNotifications}>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="relative">
+                      <Bell className="w-5 h-5" />
+                      {notifications.length > 0 && (
+                        <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#FF4D4F] rounded-full text-[10px] text-white flex items-center justify-center">
+                          {notifications.length}
+                        </span>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-80">
+                    <div className="px-3 py-2 border-b">
+                      <p className="font-semibold">Notifications</p>
+                    </div>
+                    {notifications.length === 0 ? (
+                      <div className="px-3 py-8 text-center text-gray-500">
+                        <Bell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
+                        <p className="text-sm">No new notifications</p>
+                        <p className="text-xs text-gray-400 mt-1">Order updates will appear here</p>
+                      </div>
+                    ) : (
+                      <div className="max-h-80 overflow-y-auto">
+                        {notifications.slice(0, 5).map((notif, idx) => (
+                          <DropdownMenuItem key={idx} className="flex-col items-start p-3 cursor-pointer">
+                            <p className="font-medium text-sm">{notif.title}</p>
+                            <p className="text-xs text-gray-500 mt-1">{notif.message}</p>
+                          </DropdownMenuItem>
+                        ))}
+                      </div>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-center text-[#F25C23] cursor-pointer justify-center"
+                      onClick={() => navigate(createPageUrl("Orders"))}
+                    >
+                      View all orders
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

@@ -95,10 +95,10 @@ app.use(morgan('combined'));
 // Trust proxy for Render deployment (required for rate limiting behind reverse proxy)
 app.set('trust proxy', 1);
 
-// Rate limiting - increased for polling components
+// Rate limiting - very high limit for real-time app
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000, // Increased for real-time polling
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100000, // Very high for real-time features
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -536,6 +536,82 @@ app.delete('/api/carts/:id', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error('Delete cart error:', error);
     res.status(500).json({ error: 'Failed to delete cart' });
+  }
+});
+
+// ==============================================
+// ORDERS ENDPOINTS (Direct MongoDB - order-service not deployed on Render)
+// ==============================================
+app.get('/api/orders', optionalAuth, async (req, res) => {
+  try {
+    const { customer_email, restaurant_id, driver_email, order_status, id, _sort = '-created_date', _limit = 100 } = req.query;
+    let query = {};
+
+    if (id) {
+      try { query._id = new mongoose.Types.ObjectId(id); } catch (e) { return res.json({ data: [] }); }
+    }
+    if (customer_email) query.customer_email = customer_email;
+    if (restaurant_id) query.restaurant_id = restaurant_id;
+    if (driver_email) query.driver_email = driver_email;
+    if (order_status) query.order_status = order_status;
+
+    const sortField = _sort.startsWith('-') ? _sort.substring(1) : _sort;
+    const sortOrder = _sort.startsWith('-') ? -1 : 1;
+
+    const orders = await mongoose.connection.db.collection('orders')
+      .find(query)
+      .sort({ [sortField]: sortOrder })
+      .limit(parseInt(_limit))
+      .toArray();
+
+    const transformed = orders.map(o => ({ ...o, id: o._id.toString() }));
+    res.json({ data: transformed });
+  } catch (error) {
+    console.error('Orders GET error:', error);
+    res.json({ data: [] });
+  }
+});
+
+app.post('/api/orders', authenticateToken, async (req, res) => {
+  try {
+    const orderData = {
+      ...req.body,
+      created_date: new Date(),
+      updated_date: new Date(),
+      order_status: req.body.order_status || 'placed'
+    };
+    const result = await mongoose.connection.db.collection('orders').insertOne(orderData);
+    res.json({ data: { ...orderData, id: result.insertedId.toString(), _id: result.insertedId } });
+  } catch (error) {
+    console.error('Orders POST error:', error);
+    res.status(500).json({ error: 'Failed to create order' });
+  }
+});
+
+app.patch('/api/orders/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body, updated_date: new Date() };
+    await mongoose.connection.db.collection('orders').updateOne(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: updateData }
+    );
+    const updated = await mongoose.connection.db.collection('orders').findOne({ _id: new mongoose.Types.ObjectId(id) });
+    res.json({ data: { ...updated, id: updated._id.toString() } });
+  } catch (error) {
+    console.error('Orders PATCH error:', error);
+    res.status(500).json({ error: 'Failed to update order' });
+  }
+});
+
+app.delete('/api/orders/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await mongoose.connection.db.collection('orders').deleteOne({ _id: new mongoose.Types.ObjectId(id) });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Orders DELETE error:', error);
+    res.status(500).json({ error: 'Failed to delete order' });
   }
 });
 
