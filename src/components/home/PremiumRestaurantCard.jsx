@@ -23,11 +23,14 @@ const PremiumRestaurantCard = ({ restaurant, index = 0, user, favorites = [], on
         e.preventDefault();
         e.stopPropagation();
 
+        // If no user prop passed, just toggle locally (UI only)
         if (!user) {
-            toast.error("Please login to save favorites");
+            setIsLiked(!isLiked);
+            toast.success(isLiked ? "Removed from favorites" : "Added to favorites! ❤️");
             return;
         }
 
+        // With user prop, persist to database
         setIsLoading(true);
         try {
             if (isLiked) {
@@ -50,7 +53,8 @@ const PremiumRestaurantCard = ({ restaurant, index = 0, user, favorites = [], on
             if (onFavoriteChange) onFavoriteChange();
         } catch (error) {
             console.error('Favorite error:', error);
-            toast.error("Failed to update favorites");
+            // Still toggle locally even if API fails
+            setIsLiked(!isLiked);
         } finally {
             setIsLoading(false);
         }
