@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { 
+import {
   TrendingUp, DollarSign, ShoppingCart, Users, Star,
   Calendar, ChevronDown, ArrowUp, ArrowDown, Clock
 } from "lucide-react";
@@ -58,19 +58,22 @@ export default function RestaurantAnalytics() {
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['restaurant-analytics', restaurant?.id],
     queryFn: () => base44.entities.Order.filter({ restaurant_id: restaurant.id }),
-    enabled: !!restaurant?.id
+    enabled: !!restaurant?.id,
+    staleTime: 60000 // Cache for 1 minute
   });
 
   const { data: reviews = [] } = useQuery({
     queryKey: ['restaurant-reviews', restaurant?.id],
     queryFn: () => base44.entities.Review.filter({ restaurant_id: restaurant.id }),
-    enabled: !!restaurant?.id
+    enabled: !!restaurant?.id,
+    staleTime: 60000
   });
 
   const { data: menuItems = [] } = useQuery({
     queryKey: ['restaurant-menu-analytics', restaurant?.id],
     queryFn: () => base44.entities.MenuItem.filter({ restaurant_id: restaurant.id }),
-    enabled: !!restaurant?.id
+    enabled: !!restaurant?.id,
+    staleTime: 60000
   });
 
   // Calculate date ranges
@@ -83,9 +86,9 @@ export default function RestaurantAnalytics() {
   };
 
   const dateRange = getDateRange(period);
-  
+
   // Filter orders by period
-  const periodOrders = orders.filter(o => 
+  const periodOrders = orders.filter(o =>
     isWithinInterval(new Date(o.created_date), dateRange)
   );
 
@@ -103,8 +106,8 @@ export default function RestaurantAnalytics() {
     start: subDays(dateRange.start, period === 'week' ? 7 : period === 'month' ? 30 : 1),
     end: subDays(dateRange.end, period === 'week' ? 7 : period === 'month' ? 30 : 1)
   };
-  
-  const prevOrders = orders.filter(o => 
+
+  const prevOrders = orders.filter(o =>
     isWithinInterval(new Date(o.created_date), prevRange)
   );
   const prevRevenue = prevOrders.filter(o => o.order_status === 'delivered')
@@ -115,7 +118,7 @@ export default function RestaurantAnalytics() {
   const getDailyData = () => {
     const days = eachDayOfInterval(dateRange);
     return days.map(day => {
-      const dayOrders = completedOrders.filter(o => 
+      const dayOrders = completedOrders.filter(o =>
         format(new Date(o.created_date), 'yyyy-MM-dd') === format(day, 'yyyy-MM-dd')
       );
       return {
@@ -152,7 +155,7 @@ export default function RestaurantAnalytics() {
       <div className="p-6 max-w-7xl mx-auto">
         <Skeleton className="h-32 rounded-xl mb-4" />
         <div className="grid grid-cols-4 gap-4 mb-6">
-          {[1,2,3,4].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
         </div>
         <Skeleton className="h-80 rounded-xl" />
       </div>
@@ -276,10 +279,10 @@ export default function RestaurantAnalytics() {
                     <XAxis dataKey="date" fontSize={12} />
                     <YAxis fontSize={12} />
                     <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="revenue" 
-                      stroke="#F25C23" 
+                    <Line
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#F25C23"
                       strokeWidth={2}
                       dot={false}
                     />
@@ -395,7 +398,7 @@ export default function RestaurantAnalytics() {
                       <span className="text-gray-500">{slot.time}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
+                      <div
                         className="bg-[#F25C23] h-2 rounded-full"
                         style={{ width: `${slot.percent}%` }}
                       />
