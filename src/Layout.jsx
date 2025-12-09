@@ -153,11 +153,6 @@ export default function Layout({ children, currentPageName }) {
                       <p className="text-xs text-gray-500">{user?.email}</p>
                     </div>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => navigate(createPageUrl("Home"))}>
-                      <Home className="w-4 h-4 mr-2" />
-                      Customer App
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="text-red-600">
                       <LogOut className="w-4 h-4 mr-2" />
                       Logout

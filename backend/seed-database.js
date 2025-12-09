@@ -3,11 +3,7 @@
  * 
  * Run with: node seed-database.js
  * 
- * This script creates:
- * 1. Admin account
- * 2. Restaurant owner accounts
- * 3. Restaurants
- * 4. Menu Items (as separate collection)
+ * Creates data in the format expected by the FRONTEND (snake_case)
  * 
  * Admin Credentials:
  *   Email: admin@smarteats.com
@@ -20,79 +16,20 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// =============================================
-// MONGODB URI
-// =============================================
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://SmartEatsTeam:Devmatrix123@smarteats25.lypxox6.mongodb.net/smarteats?retryWrites=true&w=majority&appName=smarteats25';
 
 // =============================================
-// SCHEMAS
-// =============================================
-const userSchema = new mongoose.Schema({
-    email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: true },
-    role: { type: String, enum: ['customer', 'restaurant', 'driver', 'admin'], required: true, default: 'customer' },
-    profile: {
-        firstName: String,
-        lastName: String,
-        phone: String,
-        avatar: String
-    },
-    isEmailVerified: { type: Boolean, default: true },
-    isActive: { type: Boolean, default: true },
-    approvalStatus: { type: String, enum: ['none', 'pending', 'approved', 'rejected'], default: 'approved' }
-}, { timestamps: true });
-
-const restaurantSchema = new mongoose.Schema({
-    ownerId: { type: mongoose.Schema.Types.ObjectId, required: true },
-    ownerEmail: { type: String, required: true },
-    name: { type: String, required: true },
-    description: String,
-    cuisine_type: [String],
-    address: String,
-    city: String,
-    latitude: Number,
-    longitude: Number,
-    phone: String,
-    image_url: String,
-    logo_url: String,
-    average_rating: { type: Number, default: 0 },
-    total_reviews: { type: Number, default: 0 },
-    delivery_time_mins: { type: Number, default: 30 },
-    minimum_order: { type: Number, default: 200 },
-    delivery_fee: { type: Number, default: 40 },
-    opening_time: { type: String, default: '10:00' },
-    closing_time: { type: String, default: '22:00' },
-    status: { type: String, enum: ['pending', 'approved', 'rejected', 'suspended'], default: 'approved' },
-    is_open: { type: Boolean, default: true },
-    is_featured: { type: Boolean, default: false }
-}, { timestamps: true });
-
-const menuItemSchema = new mongoose.Schema({
-    restaurant_id: { type: String, required: true },
-    name: { type: String, required: true },
-    description: String,
-    price: { type: Number, required: true },
-    category: { type: String, required: true },
-    image_url: String,
-    is_vegetarian: { type: Boolean, default: false },
-    is_vegan: { type: Boolean, default: false },
-    is_bestseller: { type: Boolean, default: false },
-    is_available: { type: Boolean, default: true },
-    spice_level: String,
-    calories: Number,
-    preparation_time_mins: Number
-}, { timestamps: true });
-
-// =============================================
-// SEED DATA
+// SEED DATA - Matches FRONTEND format (snake_case)
 // =============================================
 
 const ADMIN_USER = {
     email: 'admin@smarteats.com',
     password: 'admin123',
     role: 'admin',
-    profile: { firstName: 'Smart', lastName: 'Admin', phone: '+91 9999999999' }
+    profile: { firstName: 'Smart', lastName: 'Admin', phone: '+91 9999999999' },
+    isEmailVerified: true,
+    isActive: true,
+    approvalStatus: 'none'
 };
 
 const RESTAURANTS_DATA = [
@@ -117,7 +54,10 @@ const RESTAURANTS_DATA = [
             delivery_time_mins: 30,
             minimum_order: 200,
             delivery_fee: 40,
-            is_featured: true
+            opening_time: '10:00',
+            closing_time: '23:00',
+            is_featured: true,
+            is_open: true
         },
         menu: [
             { name: 'Butter Chicken', description: 'Tender chicken in rich, creamy tomato sauce', price: 350, category: 'Main Course', image_url: 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&q=80', is_vegetarian: false, is_bestseller: true, spice_level: 'medium', calories: 450, preparation_time_mins: 25 },
@@ -148,7 +88,10 @@ const RESTAURANTS_DATA = [
             delivery_time_mins: 35,
             minimum_order: 250,
             delivery_fee: 50,
-            is_featured: true
+            opening_time: '11:00',
+            closing_time: '22:30',
+            is_featured: true,
+            is_open: true
         },
         menu: [
             { name: 'Kung Pao Chicken', description: 'Stir-fried chicken with peanuts and chili', price: 380, category: 'Main Course', image_url: 'https://images.unsplash.com/photo-1525755662778-989d0524087e?w=400&q=80', is_vegetarian: false, is_bestseller: true, spice_level: 'hot', calories: 420, preparation_time_mins: 20 },
@@ -178,7 +121,10 @@ const RESTAURANTS_DATA = [
             delivery_time_mins: 25,
             minimum_order: 300,
             delivery_fee: 30,
-            is_featured: true
+            opening_time: '11:00',
+            closing_time: '23:30',
+            is_featured: true,
+            is_open: true
         },
         menu: [
             { name: 'Margherita Pizza', description: 'Classic pizza with tomato, mozzarella and basil', price: 350, category: 'Pizza', image_url: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&q=80', is_vegetarian: true, is_bestseller: true, spice_level: 'mild', calories: 680, preparation_time_mins: 20 },
@@ -208,7 +154,10 @@ const RESTAURANTS_DATA = [
             delivery_time_mins: 40,
             minimum_order: 250,
             delivery_fee: 35,
-            is_featured: true
+            opening_time: '11:00',
+            closing_time: '23:00',
+            is_featured: true,
+            is_open: true
         },
         menu: [
             { name: 'Hyderabadi Chicken Biryani', description: 'Authentic dum-style biryani with chicken', price: 380, category: 'Biryani', image_url: 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400&q=80', is_vegetarian: false, is_bestseller: true, spice_level: 'medium', calories: 650, preparation_time_mins: 40 },
@@ -238,7 +187,10 @@ const RESTAURANTS_DATA = [
             delivery_time_mins: 20,
             minimum_order: 200,
             delivery_fee: 40,
-            is_featured: false
+            opening_time: '10:00',
+            closing_time: '00:00',
+            is_featured: false,
+            is_open: true
         },
         menu: [
             { name: 'Classic Cheeseburger', description: 'Juicy beef patty with cheese and special sauce', price: 280, category: 'Burgers', image_url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&q=80', is_vegetarian: false, is_bestseller: true, spice_level: 'mild', calories: 650, preparation_time_mins: 15 },
@@ -268,7 +220,10 @@ const RESTAURANTS_DATA = [
             delivery_time_mins: 15,
             minimum_order: 100,
             delivery_fee: 20,
-            is_featured: true
+            opening_time: '06:00',
+            closing_time: '22:00',
+            is_featured: true,
+            is_open: true
         },
         menu: [
             { name: 'Masala Dosa', description: 'Crispy rice crepe with spiced potato filling', price: 120, category: 'Dosa', image_url: 'https://images.unsplash.com/photo-1630383249896-424e482df921?w=400&q=80', is_vegetarian: true, is_vegan: true, is_bestseller: true, spice_level: 'medium', calories: 350, preparation_time_mins: 15 },
@@ -294,27 +249,31 @@ async function seedDatabase() {
         await mongoose.connect(MONGODB_URI);
         console.log('✅ Connected to MongoDB\n');
 
-        // Create models
-        const User = mongoose.model('User', userSchema);
-        const Restaurant = mongoose.model('Restaurant', restaurantSchema);
-        const MenuItem = mongoose.model('MenuItem', menuItemSchema);
+        const db = mongoose.connection.db;
 
-        // Clear existing data for fresh start
+        // =============================================
+        // CLEAR EXISTING SEED DATA
+        // =============================================
         console.log('🧹 Clearing existing seed data...');
-        await User.deleteMany({ email: 'admin@smarteats.com' });
-        await User.deleteMany({ email: { $regex: /@gmail\.com$/, $options: 'i' }, role: 'restaurant' });
-        await Restaurant.deleteMany({ ownerEmail: { $regex: /@gmail\.com$/, $options: 'i' } });
-        await MenuItem.deleteMany({});
-        console.log('   ✅ Cleared existing seed data\n');
+        await db.collection('users').deleteOne({ email: 'admin@smarteats.com' });
+
+        for (const data of RESTAURANTS_DATA) {
+            await db.collection('users').deleteOne({ email: data.ownerEmail });
+            await db.collection('restaurants').deleteOne({ owner_email: data.ownerEmail });
+        }
+        await db.collection('menuitems').deleteMany({});
+        console.log('   ✅ Cleared\n');
 
         // =============================================
         // 1. CREATE ADMIN USER
         // =============================================
         console.log('👑 Creating Admin User...');
         const hashedAdminPassword = await hashPassword(ADMIN_USER.password);
-        await User.create({
+        await db.collection('users').insertOne({
             ...ADMIN_USER,
-            password: hashedAdminPassword
+            password: hashedAdminPassword,
+            createdAt: new Date(),
+            updatedAt: new Date()
         });
         console.log('   ✅ Admin created: admin@smarteats.com / admin123\n');
 
@@ -328,7 +287,7 @@ async function seedDatabase() {
         for (const data of RESTAURANTS_DATA) {
             // Create restaurant owner user
             const hashedPassword = await hashPassword(data.ownerPassword);
-            const owner = await User.create({
+            const ownerResult = await db.collection('users').insertOne({
                 email: data.ownerEmail,
                 password: hashedPassword,
                 role: 'restaurant',
@@ -336,41 +295,50 @@ async function seedDatabase() {
                     firstName: data.ownerFirstName,
                     lastName: data.ownerLastName
                 },
+                isEmailVerified: true,
                 isActive: true,
-                approvalStatus: 'approved'
+                approvalStatus: 'approved',
+                createdAt: new Date(),
+                updatedAt: new Date()
             });
 
-            // Create restaurant
-            const restaurant = await Restaurant.create({
-                ownerId: owner._id,
-                ownerEmail: data.ownerEmail,
+            // Create restaurant with FRONTEND format (snake_case, owner_email, status: approved)
+            const restaurantResult = await db.collection('restaurants').insertOne({
+                owner_email: data.ownerEmail,  // IMPORTANT: snake_case for frontend
+                ownerId: ownerResult.insertedId,
                 ...data.restaurant,
-                status: 'approved',
-                is_open: true
+                status: 'approved',  // IMPORTANT: 'approved' for frontend
+                created_date: new Date(),
+                createdAt: new Date(),
+                updatedAt: new Date()
             });
+
+            const restaurantId = restaurantResult.insertedId.toString();
 
             console.log(`   ✅ ${data.restaurant.name}`);
             console.log(`      Owner: ${data.ownerEmail} / ${data.ownerPassword}`);
 
             // Create menu items
             for (const item of data.menu) {
-                await MenuItem.create({
-                    restaurant_id: restaurant._id.toString(),
+                await db.collection('menuitems').insertOne({
+                    restaurant_id: restaurantId,
                     ...item,
-                    is_available: true
+                    is_available: true,
+                    created_date: new Date(),
+                    createdAt: new Date(),
+                    updatedAt: new Date()
                 });
                 totalMenuItems++;
             }
-            console.log(`      Menu Items: ${data.menu.length}`);
-            console.log('');
+            console.log(`      Menu Items: ${data.menu.length}\n`);
         }
 
         // =============================================
         // SUMMARY
         // =============================================
-        const userCount = await User.countDocuments();
-        const restaurantCount = await Restaurant.countDocuments();
-        const menuItemCount = await MenuItem.countDocuments();
+        const userCount = await db.collection('users').countDocuments();
+        const restaurantCount = await db.collection('restaurants').countDocuments();
+        const menuItemCount = await db.collection('menuitems').countDocuments();
 
         console.log('='.repeat(60));
         console.log('📊 SEEDING COMPLETE');
