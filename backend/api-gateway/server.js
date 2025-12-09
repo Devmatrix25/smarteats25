@@ -31,7 +31,54 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://SmartEatsTeam:Devm
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-}).then(() => console.log('✅ API Gateway connected to MongoDB'))
+}).then(async () => {
+  console.log('✅ API Gateway connected to MongoDB');
+
+  // Auto-create Flashman driver if not exists
+  try {
+    const db = mongoose.connection.db;
+    const existingDriver = await db.collection('drivers').findOne({ email: 'flashman@smarteats.com' });
+    if (!existingDriver) {
+      // Create Flashman user
+      const hashedPassword = await bcrypt.hash('flashman123', 10);
+      await db.collection('users').insertOne({
+        email: 'flashman@smarteats.com',
+        password: hashedPassword,
+        role: 'driver',
+        profile: { firstName: 'Flash', lastName: 'Man' },
+        isEmailVerified: true,
+        isActive: true,
+        approvalStatus: 'approved',
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+
+      // Create Flashman driver record
+      await db.collection('drivers').insertOne({
+        email: 'flashman@smarteats.com',
+        name: 'Flashman',
+        phone: '+91 99999 88888',
+        vehicle_type: 'Motorcycle',
+        vehicle_number: 'KA-01-FL-0001',
+        license_number: 'DL-FLASH-2024',
+        status: 'approved',
+        is_online: true,
+        is_available: true,
+        current_latitude: 12.9716,
+        current_longitude: 77.5946,
+        total_deliveries: 150,
+        total_earnings: 15000,
+        average_rating: 4.9,
+        created_date: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      console.log('✅ Flashman driver created: flashman@smarteats.com / flashman123');
+    }
+  } catch (err) {
+    console.log('Flashman setup skipped:', err.message);
+  }
+})
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // Redis client for rate limiting / caching
