@@ -23,6 +23,17 @@ console.log('  JWT_SECRET (first 8 chars) =', process.env.JWT_SECRET?.slice(0, 8
 const app = express();
 const PORT = process.env.API_GATEWAY_PORT || process.env.PORT || 4000;
 
+// ==============================================
+// CONNECT TO MONGODB FIRST (before any handlers)
+// ==============================================
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://SmartEatsTeam:Devmatrix123@smarteats25.lypxox6.mongodb.net/smarteats?retryWrites=true&w=majority&appName=smarteats25';
+
+mongoose.connect(MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+}).then(() => console.log('✅ API Gateway connected to MongoDB'))
+  .catch(err => console.error('❌ MongoDB connection error:', err));
+
 // Redis client for rate limiting / caching
 let redisClient;
 (async () => {
@@ -461,15 +472,6 @@ app.patch('/api/notifications/:id', authenticateToken, async (req, res) => {
 // ==============================================
 // DIRECT MONGODB HANDLERS (for entities without dedicated services)
 // ==============================================
-
-// Connect to MongoDB if not already connected
-if (mongoose.connection.readyState === 0) {
-  mongoose.connect(process.env.MONGODB_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  }).then(() => console.log('✅ API Gateway connected to MongoDB'))
-    .catch(err => console.error('❌ MongoDB connection error:', err));
-}
 
 // Menu Items endpoint
 app.get('/api/menuitems', async (req, res) => {
