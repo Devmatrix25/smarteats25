@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
-import { 
+import {
   Search, Filter, SlidersHorizontal, Star, Clock,
   MapPin, ChevronDown
 } from "lucide-react";
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 
 const cuisineFilters = [
-  "All", "Indian", "Chinese", "Italian", "Mexican", 
+  "All", "Indian", "Chinese", "Italian", "Mexican",
   "Thai", "Japanese", "American", "Mediterranean"
 ];
 
@@ -36,7 +36,9 @@ export default function Restaurants() {
 
   const { data: restaurants = [], isLoading } = useQuery({
     queryKey: ['all-restaurants'],
-    queryFn: () => base44.entities.Restaurant.filter({ status: 'approved' })
+    queryFn: () => base44.entities.Restaurant.filter({ status: 'approved' }),
+    staleTime: 60000,
+    refetchOnWindowFocus: false
   });
 
   // Filter and sort restaurants
@@ -45,7 +47,7 @@ export default function Restaurants() {
   // Search filter
   if (searchQuery) {
     const query = searchQuery.toLowerCase();
-    filteredRestaurants = filteredRestaurants.filter(r => 
+    filteredRestaurants = filteredRestaurants.filter(r =>
       r.name?.toLowerCase().includes(query) ||
       r.cuisine_type?.some(c => c.toLowerCase().includes(query))
     );
@@ -164,7 +166,7 @@ export default function Restaurants() {
       {/* Restaurant Grid */}
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {[1,2,3,4,5,6,7,8].map(i => (
+          {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
             <Skeleton key={i} className="h-64 rounded-2xl" />
           ))}
         </div>
@@ -179,7 +181,7 @@ export default function Restaurants() {
           <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-xl font-semibold mb-2">No restaurants found</h3>
           <p className="text-gray-500 mb-6">Try adjusting your search or filters</p>
-          <Button 
+          <Button
             variant="outline"
             onClick={() => {
               setSearchQuery("");

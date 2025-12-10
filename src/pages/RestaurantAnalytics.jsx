@@ -59,21 +59,24 @@ export default function RestaurantAnalytics() {
     queryKey: ['restaurant-analytics', restaurant?.id],
     queryFn: () => base44.entities.Order.filter({ restaurant_id: restaurant.id }),
     enabled: !!restaurant?.id,
-    staleTime: 60000 // Cache for 1 minute
+    staleTime: 60000,
+    refetchOnWindowFocus: false
   });
 
   const { data: reviews = [] } = useQuery({
     queryKey: ['restaurant-reviews', restaurant?.id],
     queryFn: () => base44.entities.Review.filter({ restaurant_id: restaurant.id }),
     enabled: !!restaurant?.id,
-    staleTime: 60000
+    staleTime: 60000,
+    refetchOnWindowFocus: false
   });
 
   const { data: menuItems = [] } = useQuery({
     queryKey: ['restaurant-menu-analytics', restaurant?.id],
     queryFn: () => base44.entities.MenuItem.filter({ restaurant_id: restaurant.id }),
     enabled: !!restaurant?.id,
-    staleTime: 60000
+    staleTime: 60000,
+    refetchOnWindowFocus: false
   });
 
   // Calculate date ranges

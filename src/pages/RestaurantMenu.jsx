@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { base44 } from "@/api/base44Client";
 import { useNavigate } from "react-router-dom";
 import { createPageUrl } from "@/utils";
-import { 
+import {
   Plus, Edit2, Trash2, Search, Leaf, Image as ImageIcon,
   MoreVertical, Eye, EyeOff, Star, Flame
 } from "lucide-react";
@@ -126,7 +126,9 @@ export default function RestaurantMenu() {
   const { data: menuItems = [], isLoading } = useQuery({
     queryKey: ['menu-items', restaurant?.id],
     queryFn: () => base44.entities.MenuItem.filter({ restaurant_id: restaurant.id }),
-    enabled: !!restaurant?.id
+    enabled: !!restaurant?.id,
+    staleTime: 60000,
+    refetchOnWindowFocus: false
   });
 
   const saveMutation = useMutation({
@@ -244,8 +246,8 @@ export default function RestaurantMenu() {
     return acc;
   }, {});
 
-  const filteredCategories = selectedCategory === "all" 
-    ? Object.keys(itemsByCategory) 
+  const filteredCategories = selectedCategory === "all"
+    ? Object.keys(itemsByCategory)
     : [selectedCategory];
 
   if (isAuthLoading) {
@@ -254,7 +256,7 @@ export default function RestaurantMenu() {
         <div className="max-w-7xl mx-auto">
           <Skeleton className="h-10 w-48 mb-6" />
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {[1,2,3].map(i => <Skeleton key={i} className="h-40 rounded-xl" />)}
+            {[1, 2, 3].map(i => <Skeleton key={i} className="h-40 rounded-xl" />)}
           </div>
         </div>
       </div>
@@ -270,7 +272,7 @@ export default function RestaurantMenu() {
             <h1 className="text-2xl font-bold">Menu Management</h1>
             <p className="text-gray-500">{menuItems.length} items</p>
           </div>
-          <Button 
+          <Button
             onClick={() => {
               resetForm();
               setEditingItem(null);
@@ -310,11 +312,11 @@ export default function RestaurantMenu() {
         {/* Menu Items */}
         {isLoading ? (
           <div className="space-y-8">
-            {[1,2].map(i => (
+            {[1, 2].map(i => (
               <div key={i}>
                 <Skeleton className="h-6 w-32 mb-4" />
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {[1,2,3].map(j => <Skeleton key={j} className="h-40 rounded-xl" />)}
+                  {[1, 2, 3].map(j => <Skeleton key={j} className="h-40 rounded-xl" />)}
                 </div>
               </div>
             ))}
@@ -335,7 +337,7 @@ export default function RestaurantMenu() {
                   </h2>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {items.map(item => (
-                      <div 
+                      <div
                         key={item.id}
                         className={cn(
                           "bg-white rounded-xl p-4 shadow-sm border-2 transition-all",
@@ -373,7 +375,7 @@ export default function RestaurantMenu() {
                                 </div>
                                 <p className="text-lg font-bold text-[#F25C23]">₹{item.price}</p>
                               </div>
-                              
+
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -385,7 +387,7 @@ export default function RestaurantMenu() {
                                     <Edit2 className="w-4 h-4 mr-2" />
                                     Edit
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem 
+                                  <DropdownMenuItem
                                     onClick={() => toggleAvailability.mutate({ id: item.id, is_available: !item.is_available })}
                                   >
                                     {item.is_available ? (
@@ -400,7 +402,7 @@ export default function RestaurantMenu() {
                                       </>
                                     )}
                                   </DropdownMenuItem>
-                                  <DropdownMenuItem 
+                                  <DropdownMenuItem
                                     className="text-red-600"
                                     onClick={() => deleteMutation.mutate(item.id)}
                                   >
@@ -446,7 +448,7 @@ export default function RestaurantMenu() {
             <ImageIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">No menu items yet</h3>
             <p className="text-gray-500 mb-6">Start adding your delicious dishes</p>
-            <Button 
+            <Button
               onClick={() => setShowForm(true)}
               className="bg-[#F25C23] hover:bg-[#D94A18] rounded-xl"
             >
@@ -498,8 +500,8 @@ export default function RestaurantMenu() {
               </div>
               <div>
                 <Label>Category</Label>
-                <Select 
-                  value={formData.category} 
+                <Select
+                  value={formData.category}
                   onValueChange={(v) => setFormData(f => ({ ...f, category: v }))}
                 >
                   <SelectTrigger className="mt-1 rounded-xl">
@@ -517,8 +519,8 @@ export default function RestaurantMenu() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Spice Level</Label>
-                <Select 
-                  value={formData.spice_level} 
+                <Select
+                  value={formData.spice_level}
                   onValueChange={(v) => setFormData(f => ({ ...f, spice_level: v }))}
                 >
                   <SelectTrigger className="mt-1 rounded-xl">
@@ -695,7 +697,7 @@ export default function RestaurantMenu() {
             <Button variant="outline" onClick={() => setShowForm(false)} className="rounded-xl">
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleSubmit}
               disabled={saveMutation.isPending}
               className="bg-[#F25C23] hover:bg-[#D94A18] rounded-xl"

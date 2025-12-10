@@ -85,7 +85,8 @@ export default function RestaurantOrders() {
       ? base44.entities.Order.filter({}, '-created_date')
       : base44.entities.Order.filter({ restaurant_id: restaurant.id }, '-created_date'),
     enabled: !!restaurant?.id,
-    staleTime: 30000 // Cache for 30 seconds, use manual refresh button
+    staleTime: 30000,
+    refetchOnWindowFocus: false
   });
 
   const updateOrderMutation = useMutation({

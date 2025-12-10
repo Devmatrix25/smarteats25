@@ -202,14 +202,14 @@ export default function DriverDashboard() {
     return (
       <div className="p-6">
         <div className="max-w-xl mx-auto text-center py-16">
-          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
             <Truck className="w-12 h-12 text-green-600" />
           </div>
-          <h2 className="text-2xl font-bold mb-4">Become a Delivery Partner</h2>
-          <p className="text-gray-500 mb-6">Join SmartEats and start earning</p>
-          <Link to={createPageUrl("DriverDeliveries")}>
-            <Button className="bg-green-600 hover:bg-green-700 rounded-xl">Register as Driver</Button>
-          </Link>
+          <h2 className="text-2xl font-bold mb-4">Setting up your dashboard...</h2>
+          <p className="text-gray-500 mb-6">Please wait while we load your driver profile</p>
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          </div>
         </div>
       </div>
     );
