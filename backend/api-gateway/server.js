@@ -38,14 +38,16 @@ mongoose.connect(MONGODB_URI, {
   // Auto-create Flashman driver if not exists
   try {
     const db = mongoose.connection.db;
-    const existingDriver = await db.collection('drivers').findOne({ email: 'flashman@smarteats.com' });
-    if (!existingDriver) {
-      // Create Flashman user
+
+    // Check if Flashman user exists
+    const existingUser = await db.collection('users').findOne({ email: 'flashman@smarteats.com' });
+    if (!existingUser) {
       const hashedPassword = await bcrypt.hash('flashman123', 10);
       await db.collection('users').insertOne({
         email: 'flashman@smarteats.com',
         password: hashedPassword,
         role: 'driver',
+        full_name: 'Flashman',
         profile: { firstName: 'Flash', lastName: 'Man' },
         isEmailVerified: true,
         isActive: true,
@@ -53,8 +55,12 @@ mongoose.connect(MONGODB_URI, {
         createdAt: new Date(),
         updatedAt: new Date()
       });
+      console.log('✅ Flashman user created');
+    }
 
-      // Create Flashman driver record
+    // Check if Flashman driver record exists
+    const existingDriver = await db.collection('drivers').findOne({ email: 'flashman@smarteats.com' });
+    if (!existingDriver) {
       await db.collection('drivers').insertOne({
         email: 'flashman@smarteats.com',
         name: 'Flashman',
@@ -69,15 +75,17 @@ mongoose.connect(MONGODB_URI, {
         current_longitude: 77.5946,
         total_deliveries: 0,
         total_earnings: 0,
-        average_rating: 0,
+        average_rating: 4.9,
         created_date: new Date(),
         createdAt: new Date(),
         updatedAt: new Date()
       });
-      console.log('✅ Flashman driver created: flashman@smarteats.com / flashman123');
+      console.log('✅ Flashman driver record created');
     }
+
+    console.log('✅ Flashman ready: flashman@smarteats.com / flashman123');
   } catch (err) {
-    console.log('Flashman setup skipped:', err.message);
+    console.error('Flashman setup error:', err.message);
   }
 })
   .catch(err => console.error('❌ MongoDB connection error:', err));
@@ -830,14 +838,22 @@ app.delete('/api/addresss/:id', async (req, res) => {
 // ==============================================
 app.get('/api/drivers', async (req, res) => {
   try {
-    const { email, status, is_available, _limit = 100 } = req.query;
+    const { email, status, is_available, _sort = '-created_date', _limit = 100 } = req.query;
     let query = {};
     if (email) query.email = email;
     if (status) query.status = status;
     if (is_available) query.is_available = is_available === 'true';
 
+    const sortField = _sort.startsWith('-') ? _sort.substring(1) : _sort;
+    const sortOrder = _sort.startsWith('-') ? -1 : 1;
+
     const drivers = await mongoose.connection.db.collection('drivers')
-      .find(query).limit(parseInt(_limit)).toArray();
+      .find(query)
+      .sort({ [sortField]: sortOrder })
+      .limit(parseInt(_limit))
+      .toArray();
+
+    console.log(`Fetched ${drivers.length} drivers`);
     const transformed = drivers.map(d => ({ ...d, id: d._id.toString() }));
     res.json({ data: transformed });
   } catch (error) {
