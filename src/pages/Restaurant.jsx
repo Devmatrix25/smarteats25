@@ -117,9 +117,24 @@ export default function Restaurant() {
       toast.error("Please login first", { duration: 2000 });
       return;
     }
-    if (cart.restaurant_id && cart.restaurant_id !== restaurantId && cart.items?.length > 0) {
-      const confirm = window.confirm("Your cart contains items from another restaurant. Clear cart and add this item?");
+
+    // Check if cart has items from a different restaurant
+    const isDifferentRestaurant = cart.restaurant_id && cart.restaurant_id !== restaurantId && cart.items?.length > 0;
+
+    if (isDifferentRestaurant) {
+      const confirm = window.confirm(`Your cart contains items from ${cart.restaurant_name || 'another restaurant'}. Clear cart and add this item?`);
       if (!confirm) return;
+
+      // Delete the old cart first
+      try {
+        if (cart.id) {
+          await base44.entities.Cart.delete(cart.id);
+        }
+        // Reset local cart state
+        setCart({ items: [], restaurant_id: null });
+      } catch (e) {
+        console.log('Cart clear error:', e.message);
+      }
     }
 
     let itemPrice = item.price;
@@ -139,16 +154,19 @@ export default function Restaurant() {
     }
 
     const customKey = customizationDetails.sort().join('|');
-    const existingIndex = cart.items?.findIndex(i =>
+
+    // If we cleared the cart or it's empty, start fresh
+    const currentItems = isDifferentRestaurant ? [] : (cart.items || []);
+    const existingIndex = currentItems.findIndex(i =>
       i.menu_item_id === item.id && (i.customization_key || '') === customKey
-    ) ?? -1;
+    );
 
     let newItems;
     if (existingIndex >= 0) {
-      newItems = [...cart.items];
+      newItems = [...currentItems];
       newItems[existingIndex].quantity += 1;
     } else {
-      newItems = [...(cart.items || []), {
+      newItems = [...currentItems, {
         menu_item_id: item.id,
         name: item.name,
         price: itemPrice,
@@ -172,17 +190,20 @@ export default function Restaurant() {
     };
 
     try {
-      if (cart.id) {
-        await base44.entities.Cart.update(cart.id, cartData);
-      } else {
+      // If we cleared the cart (switched restaurants), create new cart
+      if (isDifferentRestaurant || !cart.id) {
         const newCart = await base44.entities.Cart.create(cartData);
         cartData.id = newCart.id;
+      } else {
+        await base44.entities.Cart.update(cart.id, cartData);
+        cartData.id = cart.id;
       }
-      setCart({ ...cart, ...cartData });
+      setCart(cartData);
       setCustomizeItem(null);
       toast.success(`Added ${item.name} to cart! 🛒`, { duration: 2000 });
     } catch (e) {
-      toast.error("Failed to add item", { duration: 2000 });
+      console.error('Cart error:', e.message);
+      toast.error("Failed to add item: " + e.message, { duration: 3000 });
     }
   };
 

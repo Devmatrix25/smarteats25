@@ -155,7 +155,11 @@ export default function Layout({ children, currentPageName }) {
                       <div className="px-3 py-8 text-center text-gray-500">
                         <Bell className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                         <p className="text-sm">No new notifications</p>
-                        <p className="text-xs text-gray-400 mt-1">Order updates will appear here</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {type === 'driver' ? 'New delivery requests will appear here' :
+                            type === 'restaurant' ? 'New orders will appear here' :
+                              'Notifications will appear here'}
+                        </p>
                       </div>
                     ) : (
                       <div className="max-h-80 overflow-y-auto">
@@ -170,9 +174,19 @@ export default function Layout({ children, currentPageName }) {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       className="text-center text-[#F25C23] cursor-pointer justify-center"
-                      onClick={() => navigate(createPageUrl("Orders"))}
+                      onClick={() => {
+                        setShowNotifications(false);
+                        // Navigate to the correct orders page based on type
+                        if (type === 'driver') {
+                          navigate(createPageUrl("DriverDeliveries"));
+                        } else if (type === 'restaurant') {
+                          navigate(createPageUrl("RestaurantOrders"));
+                        } else {
+                          navigate(createPageUrl("AdminOrders"));
+                        }
+                      }}
                     >
-                      View all orders
+                      {type === 'driver' ? 'View Deliveries' : 'View Orders'}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

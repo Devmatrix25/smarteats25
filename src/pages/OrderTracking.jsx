@@ -80,8 +80,9 @@ export default function OrderTracking() {
     queryFn: () => base44.entities.Order.filter({ id: orderId }),
     select: (data) => data[0],
     enabled: !!orderId && !isAuthLoading,
-    staleTime: 30000,
-    refetchOnWindowFocus: false
+    staleTime: 10000,
+    refetchInterval: 15000, // Poll every 15 seconds for real-time updates
+    refetchOnWindowFocus: true // Refetch when user comes back to page
   });
 
   // Real-time status change notifications
