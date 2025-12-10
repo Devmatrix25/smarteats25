@@ -64,7 +64,6 @@ export default function Index() {
               <a href="#features" className="text-gray-600 hover:text-[#F25C23] transition-colors">Features</a>
               <a href="#how-it-works" className="text-gray-600 hover:text-[#F25C23] transition-colors">How it Works</a>
               <a href="#partner" className="text-gray-600 hover:text-[#F25C23] transition-colors">Partner with Us</a>
-              <a href="#demo" className="text-gray-600 hover:text-[#F25C23] transition-colors">Demo Access</a>
             </div>
 
             <div className="flex items-center gap-3">
@@ -125,12 +124,10 @@ export default function Index() {
                   size="lg"
                   variant="outline"
                   className="rounded-xl h-14 px-8 text-lg border-gray-300"
-                  asChild
+                  onClick={handleLogin}
                 >
-                  <a href="#demo">
-                    <Play className="w-5 h-5 mr-2" />
-                    View Demo
-                  </a>
+                  <Play className="w-5 h-5 mr-2" />
+                  Watch How It Works
                 </Button>
               </div>
 

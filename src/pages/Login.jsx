@@ -211,44 +211,6 @@ export default function Login() {
                             </>
                         )}
 
-                        {/* DEMO LOGIN BUTTONS */}
-                        <div className="mt-8 pt-6 border-t border-gray-100">
-                            <p className="text-center text-sm text-gray-500 mb-4">Demo Access (No Password Required)</p>
-                            <div className="grid grid-cols-2 gap-3">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => handleDemoLogin('customer')}
-                                    className="text-blue-600 border-blue-100 hover:bg-blue-50"
-                                >
-                                    Customer
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => handleDemoLogin('restaurant')}
-                                    className="text-purple-600 border-purple-100 hover:bg-purple-50"
-                                >
-                                    Restaurant
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => handleDemoLogin('driver')}
-                                    className="text-green-600 border-green-100 hover:bg-green-50"
-                                >
-                                    Driver
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => handleDemoLogin('admin')}
-                                    className="text-gray-600 border-gray-100 hover:bg-gray-50"
-                                >
-                                    Admin
-                                </Button>
-                            </div>
-                        </div>
 
                         <div className="mt-6 text-center text-sm text-gray-600">
                             Don't have an account?{' '}
