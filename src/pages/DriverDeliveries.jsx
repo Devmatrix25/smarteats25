@@ -82,23 +82,22 @@ export default function DriverDeliveries() {
       if (drivers.length > 0) {
         setDriver(drivers[0]);
       } else {
-        // Auto-create driver record for ANY user with driver role
-        const isDemo = email === 'driver@demo.com';
+        // Auto-create driver record for users with driver role
+        // Only Flashman is auto-approved, all others need admin approval
         const isFlashman = email === 'flashman@smarteats.com';
-        const isAutoApproved = isDemo || isFlashman;
 
         const newDriver = await base44.entities.Driver.create({
           name: userData.full_name || userData.profile?.firstName || email.split('@')[0],
           email: email,
-          phone: userData.phone || '9876543210',
+          phone: userData.phone || '',
           vehicle_type: isFlashman ? 'Motorcycle' : 'bike',
-          vehicle_number: 'KA-00-XX-0000',
-          license_number: 'DL-PENDING-2024',
+          vehicle_number: isFlashman ? 'KA-01-FL-0001' : '',
+          license_number: isFlashman ? 'DL-FLASH-2024' : '',
           city: 'Bangalore',
-          status: isAutoApproved ? 'approved' : 'pending',
-          is_online: isAutoApproved,
-          is_available: isAutoApproved,
-          average_rating: 0,
+          status: isFlashman ? 'approved' : 'pending',
+          is_online: isFlashman,
+          is_available: isFlashman,
+          average_rating: isFlashman ? 4.9 : 0,
           total_deliveries: 0,
           total_earnings: 0,
           current_latitude: 12.9716,
@@ -106,8 +105,8 @@ export default function DriverDeliveries() {
         });
         setDriver(newDriver);
 
-        if (isAutoApproved) {
-          toast.success(`Welcome ${newDriver.name}! 🚀`);
+        if (isFlashman) {
+          toast.success(`Welcome Flashman! ⚡🚀`);
         } else {
           toast.info("Your driver profile has been created and is pending admin approval.");
         }

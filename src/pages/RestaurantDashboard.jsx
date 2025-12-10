@@ -55,10 +55,8 @@ export default function RestaurantDashboard() {
       const restaurants = await base44.entities.Restaurant.filter({ owner_email: email });
       if (restaurants.length > 0) {
         setRestaurant(restaurants[0]);
-      } else if (email === 'restaurant@demo.com') {
-        const r = await base44.entities.Restaurant.create({ name: 'Demo Restaurant', owner_email: email, cuisine_types: ['Indian', 'Chinese'], phone: '9876543210', address: { city: 'Bangalore', street: 'MG Road' }, status: 'approved', rating: 4.5, is_open: true });
-        setRestaurant(r);
       }
+      // No restaurant found - user needs to register one first
     } catch (e) {
       console.log('No restaurant found');
     }

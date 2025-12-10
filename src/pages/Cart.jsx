@@ -825,7 +825,7 @@ export default function Cart() {
                     </div>
                     <div>
                       <Label>Name on Card</Label>
-                      <Input placeholder="Name" className="mt-1 rounded-xl" defaultValue="DEMO USER" />
+                      <Input placeholder="Full Name" className="mt-1 rounded-xl" />
                     </div>
                   </>
                 ) : (
@@ -837,7 +837,7 @@ export default function Cart() {
                         <p className="text-xs text-gray-400">Or pay via UPI ID</p>
                       </div>
                     </div>
-                    <Input placeholder="Enter UPI ID" className="rounded-xl" defaultValue="demo@upi" />
+                    <Input placeholder="yourname@bank" className="rounded-xl" />
                   </div>
                 )}
 

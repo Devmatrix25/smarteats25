@@ -69,10 +69,6 @@ export default function RestaurantOrders() {
       const restaurants = await base44.entities.Restaurant.filter({ owner_email: email });
       if (restaurants.length > 0) {
         setRestaurant(restaurants[0]);
-      } else if (email === 'restaurant@demo.com') {
-        // Demo user: get first approved restaurant
-        const allRestos = await base44.entities.Restaurant.filter({ status: 'approved' });
-        if (allRestos.length > 0) setRestaurant(allRestos[0]);
       }
     } catch (e) {
       console.log('No restaurant');
@@ -81,9 +77,7 @@ export default function RestaurantOrders() {
 
   const { data: orders = [], isLoading, refetch } = useQuery({
     queryKey: ['restaurant-orders', restaurant?.id],
-    queryFn: () => user?.email === 'restaurant@demo.com'
-      ? base44.entities.Order.filter({}, '-created_date')
-      : base44.entities.Order.filter({ restaurant_id: restaurant.id }, '-created_date'),
+    queryFn: () => base44.entities.Order.filter({ restaurant_id: restaurant.id }, '-created_date'),
     enabled: !!restaurant?.id,
     staleTime: 30000,
     refetchOnWindowFocus: false
