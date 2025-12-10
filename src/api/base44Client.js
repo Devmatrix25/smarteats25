@@ -365,7 +365,8 @@ export const api = {
         LoyaltyPoints: createEntityAPI('LoyaltyPoints'),
         PointsTransaction: createEntityAPI('PointsTransaction'),
         Notification: createEntityAPI('Notification'),
-        Favorite: createEntityAPI('Favorite')
+        Favorite: createEntityAPI('Favorite'),
+        SupportTicket: createEntityAPI('SupportTicket')
     },
     integrations
 };

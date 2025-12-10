@@ -6,7 +6,7 @@ import { useAuth } from "./contexts/AuthContext";
 import {
   Home, Search, ShoppingCart, User, Clock, MapPin,
   ChevronDown, Bell, Menu, X, LogOut, Settings,
-  Store, Truck, Shield, Heart
+  Store, Truck, Shield, Heart, HelpCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -78,6 +78,7 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Restaurants', page: 'AdminRestaurants', icon: Store },
         { name: 'Drivers', page: 'AdminDrivers', icon: Truck },
         { name: 'Orders', page: 'AdminOrders', icon: ShoppingCart },
+        { name: 'Support', page: 'AdminSupport', icon: HelpCircle },
       ],
       restaurant: [
         { name: 'Dashboard', page: 'RestaurantDashboard', icon: Home },
@@ -377,6 +378,12 @@ export default function Layout({ children, currentPageName }) {
                         <Link to={createPageUrl("Addresses")} className="flex items-center">
                           <MapPin className="w-4 h-4 mr-2" />
                           Addresses
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link to={createPageUrl("Support")} className="flex items-center">
+                          <HelpCircle className="w-4 h-4 mr-2" />
+                          Help & Support
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />

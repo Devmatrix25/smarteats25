@@ -20,6 +20,7 @@ import Addresses from './pages/Addresses';
 import Favorites from './pages/Favorites';
 import Rewards from './pages/Rewards';
 import FlavorLens from './pages/FlavorLens';
+import Support from './pages/Support';
 
 // Auth Pages
 import Login from './pages/Login';
@@ -32,6 +33,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminRestaurants from './pages/AdminRestaurants';
 import AdminDrivers from './pages/AdminDrivers';
 import AdminOrders from './pages/AdminOrders';
+import AdminSupport from './pages/AdminSupport';
 
 // Restaurant Pages
 import RestaurantDashboard from './pages/RestaurantDashboard';
@@ -75,12 +77,14 @@ function App() {
             <Route path="/favorites" element={<ProtectedRoute><Layout currentPageName="Favorites"><Favorites /></Layout></ProtectedRoute>} />
             <Route path="/rewards" element={<ProtectedRoute><Layout currentPageName="Rewards"><Rewards /></Layout></ProtectedRoute>} />
             <Route path="/flavor-lens" element={<ProtectedRoute><Layout currentPageName="FlavorLens"><FlavorLens /></Layout></ProtectedRoute>} />
+            <Route path="/support" element={<ProtectedRoute><Layout currentPageName="Support"><Support /></Layout></ProtectedRoute>} />
 
             {/* Admin Routes */}
             <Route path="/admin" element={<ProtectedRoute role="admin"><Layout currentPageName="AdminDashboard"><AdminDashboard /></Layout></ProtectedRoute>} />
             <Route path="/admin/restaurants" element={<ProtectedRoute role="admin"><Layout currentPageName="AdminRestaurants"><AdminRestaurants /></Layout></ProtectedRoute>} />
             <Route path="/admin/drivers" element={<ProtectedRoute role="admin"><Layout currentPageName="AdminDrivers"><AdminDrivers /></Layout></ProtectedRoute>} />
             <Route path="/admin/orders" element={<ProtectedRoute role="admin"><Layout currentPageName="AdminOrders"><AdminOrders /></Layout></ProtectedRoute>} />
+            <Route path="/admin/support" element={<ProtectedRoute role="admin"><Layout currentPageName="AdminSupport"><AdminSupport /></Layout></ProtectedRoute>} />
 
             {/* Restaurant Routes */}
             <Route path="/restaurant/dashboard" element={<ProtectedRoute role="restaurant"><Layout currentPageName="RestaurantDashboard"><RestaurantDashboard /></Layout></ProtectedRoute>} />

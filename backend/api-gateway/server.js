@@ -1201,6 +1201,71 @@ app.get('/api/search', optionalAuth, async (req, res) => {
   }
 });
 
+// ==============================================
+// SUPPORT TICKETS ENDPOINTS
+// ==============================================
+app.get('/api/supporttickets', async (req, res) => {
+  try {
+    const { customer_email, status, _sort = '-created_date', _limit = 100 } = req.query;
+    let query = {};
+    if (customer_email) query.customer_email = customer_email;
+    if (status) query.status = status;
+
+    const sortField = _sort.startsWith('-') ? _sort.substring(1) : _sort;
+    const sortOrder = _sort.startsWith('-') ? -1 : 1;
+
+    const tickets = await mongoose.connection.db.collection('supporttickets')
+      .find(query)
+      .sort({ [sortField]: sortOrder })
+      .limit(parseInt(_limit))
+      .toArray();
+
+    const transformed = tickets.map(t => ({ ...t, id: t._id.toString() }));
+    res.json({ data: transformed });
+  } catch (error) {
+    console.error('Support Tickets GET error:', error);
+    res.json({ data: [] });
+  }
+});
+
+app.post('/api/supporttickets', async (req, res) => {
+  try {
+    const data = { ...req.body, created_date: new Date(), updated_date: new Date() };
+    const result = await mongoose.connection.db.collection('supporttickets').insertOne(data);
+    res.json({ data: { ...data, id: result.insertedId.toString(), _id: result.insertedId } });
+  } catch (error) {
+    console.error('Support Tickets POST error:', error);
+    res.status(500).json({ error: 'Failed to create ticket' });
+  }
+});
+
+app.patch('/api/supporttickets/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = { ...req.body, updated_date: new Date() };
+    await mongoose.connection.db.collection('supporttickets').updateOne(
+      { _id: new mongoose.Types.ObjectId(id) },
+      { $set: updateData }
+    );
+    const updated = await mongoose.connection.db.collection('supporttickets').findOne({ _id: new mongoose.Types.ObjectId(id) });
+    res.json({ data: { ...updated, id: updated._id.toString() } });
+  } catch (error) {
+    console.error('Support Tickets PATCH error:', error);
+    res.status(500).json({ error: 'Failed to update ticket' });
+  }
+});
+
+app.delete('/api/supporttickets/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await mongoose.connection.db.collection('supporttickets').deleteOne({ _id: new mongoose.Types.ObjectId(id) });
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Support Tickets DELETE error:', error);
+    res.status(500).json({ error: 'Failed to delete ticket' });
+  }
+});
+
 // 404 handler
 app.use((req, res) => {
   res.status(404).json({ error: 'Route not found' });
