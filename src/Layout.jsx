@@ -86,11 +86,13 @@ export default function Layout({ children, currentPageName }) {
         { name: 'Menu', page: 'RestaurantMenu', icon: Menu },
         { name: 'Analytics', page: 'RestaurantAnalytics', icon: Settings },
         { name: 'Promotions', page: 'RestaurantPromotions', icon: Settings },
+        { name: 'Support', page: 'RestaurantSupport', icon: HelpCircle },
       ],
       driver: [
         { name: 'Dashboard', page: 'DriverDashboard', icon: Home },
         { name: 'Deliveries', page: 'DriverDeliveries', icon: Truck },
         { name: 'Earnings', page: 'DriverEarnings', icon: Clock },
+        { name: 'Support', page: 'DriverSupport', icon: HelpCircle },
       ]
     };
 

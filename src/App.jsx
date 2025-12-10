@@ -42,11 +42,13 @@ import RestaurantMenu from './pages/RestaurantMenu';
 import RestaurantSettings from './pages/RestaurantSettings';
 import RestaurantAnalytics from './pages/RestaurantAnalytics';
 import RestaurantPromotions from './pages/RestaurantPromotions';
+import RestaurantSupport from './pages/RestaurantSupport';
 
 // Driver Pages
 import DriverDashboard from './pages/DriverDashboard';
 import DriverDeliveries from './pages/DriverDeliveries';
 import DriverEarnings from './pages/DriverEarnings';
+import DriverSupport from './pages/DriverSupport';
 
 function App() {
   return (
@@ -93,11 +95,13 @@ function App() {
             <Route path="/restaurant/settings" element={<ProtectedRoute role="restaurant"><Layout currentPageName="RestaurantSettings"><RestaurantSettings /></Layout></ProtectedRoute>} />
             <Route path="/restaurant/analytics" element={<ProtectedRoute role="restaurant"><Layout currentPageName="RestaurantAnalytics"><RestaurantAnalytics /></Layout></ProtectedRoute>} />
             <Route path="/restaurant/promotions" element={<ProtectedRoute role="restaurant"><Layout currentPageName="RestaurantPromotions"><RestaurantPromotions /></Layout></ProtectedRoute>} />
+            <Route path="/restaurant/support" element={<ProtectedRoute role="restaurant"><Layout currentPageName="RestaurantSupport"><RestaurantSupport /></Layout></ProtectedRoute>} />
 
             {/* Driver Routes */}
             <Route path="/driver" element={<ProtectedRoute role="driver"><Layout currentPageName="DriverDashboard"><DriverDashboard /></Layout></ProtectedRoute>} />
             <Route path="/driver/deliveries" element={<ProtectedRoute role="driver"><Layout currentPageName="DriverDeliveries"><DriverDeliveries /></Layout></ProtectedRoute>} />
             <Route path="/driver/earnings" element={<ProtectedRoute role="driver"><Layout currentPageName="DriverEarnings"><DriverEarnings /></Layout></ProtectedRoute>} />
+            <Route path="/driver/support" element={<ProtectedRoute role="driver"><Layout currentPageName="DriverSupport"><DriverSupport /></Layout></ProtectedRoute>} />
           </Routes>
         </WebSocketProvider>
       </AuthProvider>

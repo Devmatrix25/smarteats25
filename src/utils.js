@@ -27,9 +27,11 @@ export function createPageUrl(pageName) {
     RestaurantSettings: '/restaurant/settings',
     RestaurantAnalytics: '/restaurant/analytics',
     RestaurantPromotions: '/restaurant/promotions',
+    RestaurantSupport: '/restaurant/support',
     DriverDashboard: '/driver',
     DriverDeliveries: '/driver/deliveries',
     DriverEarnings: '/driver/earnings',
+    DriverSupport: '/driver/support',
   };
 
   return routes[pageName] || '/';
