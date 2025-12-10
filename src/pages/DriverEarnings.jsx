@@ -401,6 +401,59 @@ export default function DriverEarnings() {
           </CardContent>
         </Card>
 
+        {/* Fuel Cost Calculator */}
+        <Card className="mb-6 border-0 shadow-lg overflow-hidden">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-gradient-to-br from-red-400 to-orange-500 rounded-xl flex items-center justify-center">
+                <Flame className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-bold text-xl">Fuel Cost Calculator</h3>
+                <p className="text-sm text-gray-500">Track your net profit after fuel expenses</p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-4 gap-4">
+              <div className="bg-gray-50 rounded-xl p-4">
+                <p className="text-sm text-gray-500 mb-1">Avg. Distance/Delivery</p>
+                <p className="text-2xl font-bold">5 km</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-4">
+                <p className="text-sm text-gray-500 mb-1">Vehicle Mileage</p>
+                <p className="text-2xl font-bold">45 km/L</p>
+              </div>
+              <div className="bg-gray-50 rounded-xl p-4">
+                <p className="text-sm text-gray-500 mb-1">Fuel Price</p>
+                <p className="text-2xl font-bold">₹105/L</p>
+              </div>
+              <div className="bg-red-50 rounded-xl p-4">
+                <p className="text-sm text-gray-500 mb-1">Est. Fuel Cost ({selectedPeriod})</p>
+                <p className="text-2xl font-bold text-red-600">
+                  -₹{Math.round((earnings.count * 5 / 45) * 105)}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-gray-600">Net Profit ({selectedPeriod})</p>
+                  <p className="text-xs text-gray-500">Earnings - Fuel Cost</p>
+                </div>
+                <div className="text-right">
+                  <p className="text-3xl font-bold text-green-600">
+                    ₹{Math.round(earnings.total - (earnings.count * 5 / 45) * 105)}
+                  </p>
+                  <p className="text-xs text-green-600">
+                    {Math.round(((earnings.total - (earnings.count * 5 / 45) * 105) / earnings.total) * 100) || 0}% profit margin
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Leaderboard */}
           <Card className="lg:col-span-2">
