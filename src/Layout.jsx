@@ -380,12 +380,15 @@ export default function Layout({ children, currentPageName }) {
                           Addresses
                         </Link>
                       </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to={createPageUrl("Support")} className="flex items-center">
-                          <HelpCircle className="w-4 h-4 mr-2" />
-                          Help & Support
-                        </Link>
-                      </DropdownMenuItem>
+                      {/* Help & Support - Only for customers */}
+                      {user.role === 'customer' && (
+                        <DropdownMenuItem asChild>
+                          <Link to={createPageUrl("Support")} className="flex items-center">
+                            <HelpCircle className="w-4 h-4 mr-2" />
+                            Help & Support
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       {user.role === 'admin' && (
                         <>

@@ -73,6 +73,13 @@ export default function Support() {
                 return;
             }
             const userData = await base44.auth.me();
+
+            // Only customers can access this page
+            if (userData.role !== 'customer') {
+                navigate('/home');
+                return;
+            }
+
             setUser(userData);
         } catch (e) {
             navigate('/login');
