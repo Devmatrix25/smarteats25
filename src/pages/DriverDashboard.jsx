@@ -155,20 +155,32 @@ export default function DriverDashboard() {
   };
 
   const acceptDelivery = async (order) => {
+    // Prevent accepting if driver already has an active delivery
+    if (driver.is_busy || activeDelivery) {
+      toast.error("You already have an active delivery. Complete it first!");
+      return;
+    }
+
     try {
+      // Mark driver as busy FIRST to prevent race conditions
+      await base44.entities.Driver.update(driver.id, { is_busy: true });
+
+      // Update order with driver info
       await base44.entities.Order.update(order.id, {
         driver_email: driver.email,
         driver_name: driver.name,
         driver_id: driver.id,
         order_status: 'picked_up'
       });
-      await base44.entities.Driver.update(driver.id, { is_busy: true });
+
       setDriver({ ...driver, is_busy: true });
-      toast.success("🎉 Delivery accepted!");
+      toast.success("🎉 Delivery accepted! Head to the restaurant for pickup.");
       refetch();
       refetchAvailable();
     } catch (e) {
-      toast.error("Failed to accept delivery");
+      // Revert driver status on error
+      await base44.entities.Driver.update(driver.id, { is_busy: false });
+      toast.error("Failed to accept delivery. Please try again.");
     }
   };
 

@@ -573,6 +573,31 @@ export default function Login() {
                                 Sign up
                             </Link>
                         </div>
+
+                        {/* Role-specific login links */}
+                        <div className="mt-6 pt-6 border-t border-gray-200">
+                            <p className="text-xs text-gray-500 text-center mb-3">Other login options:</p>
+                            <div className="flex flex-wrap justify-center gap-2">
+                                <Link
+                                    to="/login/restaurant"
+                                    className="text-xs px-3 py-1.5 bg-orange-50 text-orange-600 rounded-full hover:bg-orange-100 transition-colors"
+                                >
+                                    🍽️ Restaurant
+                                </Link>
+                                <Link
+                                    to="/login/driver"
+                                    className="text-xs px-3 py-1.5 bg-emerald-50 text-emerald-600 rounded-full hover:bg-emerald-100 transition-colors"
+                                >
+                                    🚚 Driver
+                                </Link>
+                                <Link
+                                    to="/login/admin"
+                                    className="text-xs px-3 py-1.5 bg-slate-100 text-slate-600 rounded-full hover:bg-slate-200 transition-colors"
+                                >
+                                    🔐 Admin
+                                </Link>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="mt-4 text-center text-sm text-gray-500">
@@ -585,3 +610,4 @@ export default function Login() {
         </GoogleOAuthProvider>
     );
 }
+

@@ -12,9 +12,9 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-// Gemini API configuration
+// Gemini API configuration - Using stable Gemini 1.5 Flash
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyBd5cA3aztbQAuBlIiKBmGJFHuxggBX7VQ";
-const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
 export default function FlavorLens() {
   const [selectedImage, setSelectedImage] = useState(null);

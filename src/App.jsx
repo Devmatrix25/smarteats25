@@ -27,6 +27,9 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import RegisterRestaurant from './pages/RegisterRestaurant';
 import RegisterDriver from './pages/RegisterDriver';
+import RestaurantLogin from './pages/RestaurantLogin';
+import DriverLogin from './pages/DriverLogin';
+import AdminLogin from './pages/AdminLogin';
 
 // Admin Pages
 import AdminDashboard from './pages/AdminDashboard';
@@ -59,6 +62,9 @@ function App() {
             {/* Public Routes */}
             <Route path="/" element={<Layout currentPageName="Index"><Index /></Layout>} />
             <Route path="/login" element={<Login />} />
+            <Route path="/login/restaurant" element={<RestaurantLogin />} />
+            <Route path="/login/driver" element={<DriverLogin />} />
+            <Route path="/login/admin" element={<AdminLogin />} />
             <Route path="/register" element={<Register />} />
             <Route path="/register/restaurant" element={<RegisterRestaurant />} />
             <Route path="/register/driver" element={<RegisterDriver />} />
