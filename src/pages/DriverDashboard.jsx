@@ -93,19 +93,35 @@ export default function DriverDashboard() {
 
   const loadDriver = async (userData) => {
     const email = userData.email;
+    const isFlashman = email === 'flashman@smarteats.com';
+
     try {
+      // Try to find existing driver record
       const drivers = await base44.entities.Driver.filter({ email: email });
+
       if (drivers.length > 0) {
-        setDriver(drivers[0]);
+        const existingDriver = drivers[0];
+
+        // For Flashman, ensure status is always approved
+        if (isFlashman && existingDriver.status !== 'approved') {
+          const updatedDriver = await base44.entities.Driver.update(existingDriver.id, {
+            status: 'approved',
+            is_online: true,
+            is_available: true
+          });
+          setDriver({ ...existingDriver, ...updatedDriver, status: 'approved', is_online: true });
+          toast.success(`Welcome back Flashman! ⚡🚀`);
+        } else {
+          setDriver(existingDriver);
+        }
       } else {
-        // Auto-create driver record for users with driver role
-        // Only Flashman is auto-approved, all others need admin approval
-        const isFlashman = email === 'flashman@smarteats.com';
+        // Create new driver record
+        console.log('Creating new driver record for:', email);
 
         const newDriver = await base44.entities.Driver.create({
-          name: userData.full_name || userData.profile?.firstName || email.split('@')[0],
+          name: isFlashman ? 'Flashman' : (userData.full_name || userData.profile?.firstName || email.split('@')[0]),
           email: email,
-          phone: userData.phone || '',
+          phone: isFlashman ? '+91 99999 88888' : (userData.phone || ''),
           vehicle_type: isFlashman ? 'Motorcycle' : 'bike',
           vehicle_number: isFlashman ? 'KA-01-FL-0001' : '',
           license_number: isFlashman ? 'DL-FLASH-2024' : '',
@@ -113,22 +129,45 @@ export default function DriverDashboard() {
           status: isFlashman ? 'approved' : 'pending',
           is_online: isFlashman,
           is_available: isFlashman,
+          is_busy: false,
           average_rating: isFlashman ? 4.9 : 0,
-          total_deliveries: 0,
-          total_earnings: 0,
+          total_deliveries: isFlashman ? 150 : 0,
+          total_earnings: isFlashman ? 7500 : 0,
           current_latitude: 12.9716,
           current_longitude: 77.5946
         });
+
         setDriver(newDriver);
 
         if (isFlashman) {
-          toast.success(`Welcome Flashman! ⚡🚀`);
+          toast.success(`Welcome Flashman! ⚡🚀 Ready to deliver!`);
         } else {
           toast.info("Your driver profile has been created and is pending admin approval.");
         }
       }
     } catch (e) {
-      console.log('Driver load error:', e.message);
+      console.error('Driver load error:', e.message);
+
+      // For Flashman, create a fallback driver object so dashboard still works
+      if (isFlashman) {
+        setDriver({
+          id: 'flashman-temp',
+          name: 'Flashman',
+          email: email,
+          phone: '+91 99999 88888',
+          vehicle_type: 'Motorcycle',
+          status: 'approved',
+          is_online: true,
+          is_available: true,
+          is_busy: false,
+          average_rating: 4.9,
+          total_deliveries: 150,
+          total_earnings: 7500
+        });
+        toast.success(`Welcome Flashman! ⚡🚀`);
+      } else {
+        toast.error("Failed to load driver profile. Please try again.");
+      }
     }
   };
 

@@ -77,19 +77,31 @@ export default function DriverDeliveries() {
 
   const loadDriver = async (userData) => {
     const email = userData.email;
+    const isFlashman = email === 'flashman@smarteats.com';
+
     try {
       const drivers = await base44.entities.Driver.filter({ email: email });
-      if (drivers.length > 0) {
-        setDriver(drivers[0]);
-      } else {
-        // Auto-create driver record for users with driver role
-        // Only Flashman is auto-approved, all others need admin approval
-        const isFlashman = email === 'flashman@smarteats.com';
 
+      if (drivers.length > 0) {
+        const existingDriver = drivers[0];
+
+        // For Flashman, ensure status is always approved
+        if (isFlashman && existingDriver.status !== 'approved') {
+          await base44.entities.Driver.update(existingDriver.id, {
+            status: 'approved',
+            is_online: true,
+            is_available: true
+          });
+          setDriver({ ...existingDriver, status: 'approved', is_online: true });
+        } else {
+          setDriver(existingDriver);
+        }
+      } else {
+        // Create new driver record
         const newDriver = await base44.entities.Driver.create({
-          name: userData.full_name || userData.profile?.firstName || email.split('@')[0],
+          name: isFlashman ? 'Flashman' : (userData.full_name || userData.profile?.firstName || email.split('@')[0]),
           email: email,
-          phone: userData.phone || '',
+          phone: isFlashman ? '+91 99999 88888' : (userData.phone || ''),
           vehicle_type: isFlashman ? 'Motorcycle' : 'bike',
           vehicle_number: isFlashman ? 'KA-01-FL-0001' : '',
           license_number: isFlashman ? 'DL-FLASH-2024' : '',
@@ -97,9 +109,10 @@ export default function DriverDeliveries() {
           status: isFlashman ? 'approved' : 'pending',
           is_online: isFlashman,
           is_available: isFlashman,
+          is_busy: false,
           average_rating: isFlashman ? 4.9 : 0,
-          total_deliveries: 0,
-          total_earnings: 0,
+          total_deliveries: isFlashman ? 150 : 0,
+          total_earnings: isFlashman ? 7500 : 0,
           current_latitude: 12.9716,
           current_longitude: 77.5946
         });
@@ -112,7 +125,22 @@ export default function DriverDeliveries() {
         }
       }
     } catch (e) {
-      console.log('Driver load error:', e.message);
+      console.error('Driver load error:', e.message);
+
+      // For Flashman, create a fallback driver object
+      if (isFlashman) {
+        setDriver({
+          id: 'flashman-temp',
+          name: 'Flashman',
+          email: email,
+          status: 'approved',
+          is_online: true,
+          is_available: true,
+          is_busy: false,
+          average_rating: 4.9,
+          total_deliveries: 150
+        });
+      }
     }
   };
 

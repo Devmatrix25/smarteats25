@@ -191,11 +191,12 @@ const optionalAuth = (req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    version: '2.2.2', // Fixed orderNumber camelCase for MongoDB index
+    version: '2.3.0', // OTP Login + Separate Role Logins + Flashman fixes
     timestamp: new Date().toISOString(),
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     services: {
       redis: redisClient?.isOpen ? 'connected' : 'disconnected',
+      smtp: process.env.SMTP_USER ? 'configured' : 'not-configured',
     },
   });
 });
@@ -205,15 +206,25 @@ app.get('/health', (req, res) => {
 // ==============================================
 
 // SMTP Email Transporter Configuration
-const smtpTransporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT) || 587,
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
+let smtpTransporter = null;
+try {
+  if (process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+    smtpTransporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT) || 587,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    });
+    console.log('✅ SMTP configured for:', process.env.SMTP_USER);
+  } else {
+    console.warn('⚠️ SMTP not configured - OTP login will not work');
+  }
+} catch (err) {
+  console.error('❌ SMTP configuration error:', err.message);
+}
 
 // Generate 6-digit OTP
 const generateOTP = () => {
@@ -233,6 +244,14 @@ app.post('/api/auth/send-otp', async (req, res) => {
 
     if (!email || !isValidEmail(email)) {
       return res.status(400).json({ error: 'Valid email is required' });
+    }
+
+    // Check if SMTP is configured
+    if (!smtpTransporter) {
+      return res.status(503).json({
+        error: 'Email service not configured. Please use password login instead.',
+        hint: 'SMTP environment variables are missing on the server.'
+      });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
