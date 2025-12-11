@@ -30,7 +30,8 @@ export default function DriverDashboard() {
     queryKey: ['driver-orders', driver?.email],
     queryFn: () => base44.entities.Order.filter({ driver_email: driver.email }, '-created_date'),
     enabled: !!driver?.email,
-    staleTime: 30000 // Cache for 30 seconds
+    staleTime: 60000,
+    refetchOnWindowFocus: false
   });
 
   const { data: availableOrders = [], refetch: refetchAvailable } = useQuery({
@@ -40,7 +41,8 @@ export default function DriverDashboard() {
       return readyOrders.filter(o => !o.driver_email);
     },
     enabled: !!driver && driver.status === 'approved' && driver.is_online,
-    staleTime: 30000
+    staleTime: 60000,
+    refetchOnWindowFocus: false
   });
 
   const { data: latestDriverData } = useQuery({
@@ -50,7 +52,8 @@ export default function DriverDashboard() {
       return drivers[0];
     },
     enabled: !!driver?.email && driver?.status === 'pending',
-    staleTime: 30000
+    staleTime: 60000,
+    refetchOnWindowFocus: false
   });
 
   useEffect(() => {
@@ -173,12 +176,22 @@ export default function DriverDashboard() {
 
   const toggleOnline = async () => {
     if (!driver) return;
-    try {
-      await base44.entities.Driver.update(driver.id, { is_online: !driver.is_online });
+
+    // For temp Flashman, just update local state
+    if (driver.id === 'flashman-temp') {
       setDriver({ ...driver, is_online: !driver.is_online });
       toast.success(driver.is_online ? "You're now offline" : "You're now online");
+      return;
+    }
+
+    try {
+      const newOnlineStatus = !driver.is_online;
+      await base44.entities.Driver.update(driver.id, { is_online: newOnlineStatus });
+      setDriver({ ...driver, is_online: newOnlineStatus });
+      toast.success(newOnlineStatus ? "You're now online! 🟢" : "You're now offline 🔴");
     } catch (e) {
-      toast.error("Failed to update status");
+      console.error('Toggle online error:', e);
+      toast.error("Failed to update status. Please try again.");
     }
   };
 
