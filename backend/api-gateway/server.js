@@ -10,6 +10,7 @@ import jwt from 'jsonwebtoken';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
+import nodemailer from 'nodemailer';
 
 dotenv.config();
 
@@ -199,7 +200,312 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Service URLs from env
+// ==============================================
+// EMAIL OTP AUTHENTICATION SYSTEM
+// ==============================================
+
+// SMTP Email Transporter Configuration
+const smtpTransporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.gmail.com',
+  port: parseInt(process.env.SMTP_PORT) || 587,
+  secure: false, // true for 465, false for other ports
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASSWORD,
+  },
+});
+
+// Generate 6-digit OTP
+const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
+
+// Validate email format
+const isValidEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+// Send OTP via Email
+app.post('/api/auth/send-otp', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email || !isValidEmail(email)) {
+      return res.status(400).json({ error: 'Valid email is required' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if Redis is available
+    if (!redisClient?.isOpen) {
+      return res.status(503).json({ error: 'OTP service temporarily unavailable. Please try regular login.' });
+    }
+
+    // Check rate limit (max 3 attempts per 30 minutes)
+    const rateLimitKey = `otp_rate:${normalizedEmail}`;
+    const attemptCount = await redisClient.get(rateLimitKey);
+
+    if (attemptCount && parseInt(attemptCount) >= 3) {
+      const ttl = await redisClient.ttl(rateLimitKey);
+      const minutesLeft = Math.ceil(ttl / 60);
+      return res.status(429).json({
+        error: `Too many OTP requests. Please try again after ${minutesLeft} minutes.`,
+        retryAfter: ttl
+      });
+    }
+
+    // Generate OTP
+    const otp = generateOTP();
+
+    // Store OTP in Redis with 5-minute expiry
+    const otpKey = `otp:${normalizedEmail}`;
+    await redisClient.setEx(otpKey, 300, otp); // 5 minutes = 300 seconds
+
+    // Increment rate limit counter (30-minute window)
+    if (attemptCount) {
+      await redisClient.incr(rateLimitKey);
+    } else {
+      await redisClient.setEx(rateLimitKey, 1800, '1'); // 30 minutes = 1800 seconds
+    }
+
+    const currentAttempts = parseInt(attemptCount || '0') + 1;
+    const remainingAttempts = 3 - currentAttempts;
+
+    // Send email with OTP
+    try {
+      await smtpTransporter.sendMail({
+        from: process.env.EMAIL_FROM || 'SmartEats <noreply@smarteats.com>',
+        to: normalizedEmail,
+        subject: '🔐 Your SmartEats Login OTP',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          </head>
+          <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+            <table role="presentation" style="width: 100%; border-collapse: collapse;">
+              <tr>
+                <td align="center" style="padding: 40px 0;">
+                  <table role="presentation" style="width: 100%; max-width: 500px; border-collapse: collapse; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);">
+                    <!-- Header -->
+                    <tr>
+                      <td style="padding: 40px 40px 20px 40px; text-align: center; background: linear-gradient(135deg, #F25C23 0%, #D94A18 100%); border-radius: 16px 16px 0 0;">
+                        <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">🍽️ SmartEats</h1>
+                        <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Your Food Delivery Partner</p>
+                      </td>
+                    </tr>
+                    
+                    <!-- Body -->
+                    <tr>
+                      <td style="padding: 40px;">
+                        <h2 style="margin: 0 0 20px 0; color: #1D1D1F; font-size: 22px; font-weight: 600; text-align: center;">
+                          Verify Your Email
+                        </h2>
+                        <p style="margin: 0 0 30px 0; color: #666666; font-size: 16px; line-height: 1.6; text-align: center;">
+                          Hi there! 👋<br>
+                          Use the code below to complete your login to SmartEats.
+                        </p>
+                        
+                        <!-- OTP Box -->
+                        <div style="background: linear-gradient(135deg, #FFF7F2 0%, #FFEDE5 100%); border: 2px dashed #F25C23; border-radius: 12px; padding: 25px; text-align: center; margin: 0 0 30px 0;">
+                          <p style="margin: 0 0 8px 0; color: #666666; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">Your OTP Code</p>
+                          <p style="margin: 0; color: #F25C23; font-size: 36px; font-weight: 700; letter-spacing: 8px;">${otp}</p>
+                        </div>
+                        
+                        <p style="margin: 0 0 10px 0; color: #999999; font-size: 14px; text-align: center;">
+                          ⏱️ This code expires in <strong>5 minutes</strong>
+                        </p>
+                        <p style="margin: 0; color: #999999; font-size: 14px; text-align: center;">
+                          If you didn't request this code, please ignore this email.
+                        </p>
+                      </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                      <td style="padding: 20px 40px 30px 40px; text-align: center; border-top: 1px solid #f0f0f0;">
+                        <p style="margin: 0; color: #999999; font-size: 12px;">
+                          © ${new Date().getFullYear()} SmartEats. All rights reserved.
+                        </p>
+                        <p style="margin: 8px 0 0 0; color: #cccccc; font-size: 11px;">
+                          This is an automated message. Please do not reply.
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </body>
+          </html>
+        `,
+        text: `Your SmartEats OTP is: ${otp}. This code expires in 5 minutes.`
+      });
+
+      console.log(`✅ OTP sent to ${normalizedEmail}`);
+
+      res.json({
+        success: true,
+        message: 'OTP sent successfully! Please check your email.',
+        remainingAttempts,
+        expiresIn: 300 // seconds
+      });
+
+    } catch (emailError) {
+      console.error('❌ Email sending failed:', emailError);
+      // Remove the stored OTP since email failed
+      await redisClient.del(otpKey);
+      res.status(500).json({ error: 'Failed to send OTP email. Please try again.' });
+    }
+
+  } catch (error) {
+    console.error('Send OTP error:', error);
+    res.status(500).json({ error: 'Failed to send OTP' });
+  }
+});
+
+// Verify OTP and Login/Register
+app.post('/api/auth/verify-otp', async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return res.status(400).json({ error: 'Email and OTP are required' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if Redis is available
+    if (!redisClient?.isOpen) {
+      return res.status(503).json({ error: 'OTP service temporarily unavailable.' });
+    }
+
+    // Get stored OTP
+    const otpKey = `otp:${normalizedEmail}`;
+    const storedOtp = await redisClient.get(otpKey);
+
+    if (!storedOtp) {
+      return res.status(400).json({ error: 'OTP expired or not found. Please request a new one.' });
+    }
+
+    if (storedOtp !== otp.toString()) {
+      return res.status(400).json({ error: 'Invalid OTP. Please check and try again.' });
+    }
+
+    // OTP is valid - delete it
+    await redisClient.del(otpKey);
+
+    // Check if user exists
+    const db = mongoose.connection.db;
+    let user = await db.collection('users').findOne({ email: normalizedEmail });
+
+    if (!user) {
+      // Create new customer account
+      const newUser = {
+        email: normalizedEmail,
+        password: null, // No password for OTP-only users
+        role: 'customer',
+        full_name: normalizedEmail.split('@')[0], // Use email prefix as name
+        profile: {
+          firstName: '',
+          lastName: '',
+          phone: '',
+          avatar: null,
+          verified: true, // Email verified via OTP
+        },
+        is_active: true,
+        email_verified: true,
+        created_date: new Date(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      const result = await db.collection('users').insertOne(newUser);
+      user = { ...newUser, _id: result.insertedId };
+
+      console.log(`✅ New customer created via OTP: ${normalizedEmail}`);
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      {
+        userId: user._id.toString(),
+        email: user.email,
+        role: user.role
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    // Generate refresh token
+    const refreshToken = jwt.sign(
+      { userId: user._id.toString() },
+      process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    // Clear rate limit on successful login
+    await redisClient.del(`otp_rate:${normalizedEmail}`);
+
+    res.json({
+      success: true,
+      message: user.createdAt === user.updatedAt ? 'Welcome to SmartEats! 🎉' : 'Welcome back! 🎉',
+      token,
+      refreshToken,
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        role: user.role,
+        full_name: user.full_name,
+        profile: user.profile || {},
+      }
+    });
+
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({ error: 'Failed to verify OTP' });
+  }
+});
+
+// Get OTP status (remaining time, attempts)
+app.post('/api/auth/otp-status', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    if (!redisClient?.isOpen) {
+      return res.status(503).json({ error: 'Service unavailable' });
+    }
+
+    const otpKey = `otp:${normalizedEmail}`;
+    const rateLimitKey = `otp_rate:${normalizedEmail}`;
+
+    const otpTtl = await redisClient.ttl(otpKey);
+    const attemptCount = await redisClient.get(rateLimitKey);
+    const rateLimitTtl = await redisClient.ttl(rateLimitKey);
+
+    res.json({
+      otpActive: otpTtl > 0,
+      otpExpiresIn: otpTtl > 0 ? otpTtl : 0,
+      attempts: parseInt(attemptCount || '0'),
+      remainingAttempts: Math.max(0, 3 - parseInt(attemptCount || '0')),
+      rateLimitExpiresIn: rateLimitTtl > 0 ? rateLimitTtl : 0,
+      canRequestOtp: !attemptCount || parseInt(attemptCount) < 3,
+    });
+
+  } catch (error) {
+    console.error('OTP status error:', error);
+    res.status(500).json({ error: 'Failed to get OTP status' });
+  }
+});
 const services = {
   auth: process.env.AUTH_SERVICE_URL || 'http://localhost:4001',
   order: process.env.ORDER_SERVICE_URL || 'http://localhost:4002',

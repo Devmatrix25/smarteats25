@@ -150,6 +150,7 @@ export const AuthProvider = ({ children }) => {
 
     const value = {
         user,
+        setUser, // Exposed for OTP login
         loading,
         register,
         login,

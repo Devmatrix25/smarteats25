@@ -139,9 +139,12 @@ export default function AdminDrivers() {
     });
   };
 
-  const pendingDrivers = drivers.filter(d => d.status === 'pending');
-  const approvedDrivers = drivers.filter(d => d.status === 'approved');
-  const rejectedDrivers = drivers.filter(d => d.status === 'rejected' || d.status === 'suspended');
+  // Filter out Flashman (system driver) from pending/approval lists - he's auto-approved
+  const filterOutFlashman = (list) => list.filter(d => d.email !== 'flashman@smarteats.com');
+
+  const pendingDrivers = filterOutFlashman(drivers.filter(d => d.status === 'pending'));
+  const approvedDrivers = drivers.filter(d => d.status === 'approved'); // Keep Flashman in approved list for visibility
+  const rejectedDrivers = filterOutFlashman(drivers.filter(d => d.status === 'rejected' || d.status === 'suspended'));
 
   const filterBySearch = (list) => {
     if (!searchQuery) return list;
