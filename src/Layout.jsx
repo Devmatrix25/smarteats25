@@ -105,8 +105,8 @@ export default function Layout({ children, currentPageName }) {
         <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16">
-              {/* Logo */}
-              <Link to={createPageUrl("Home")} className="flex items-center gap-2">
+              {/* Logo - Links to role-specific dashboard */}
+              <Link to={type === 'admin' ? '/admin' : type === 'restaurant' ? '/restaurant/dashboard' : type === 'driver' ? '/driver' : '/'} className="flex items-center gap-2">
                 <div className="w-10 h-10 bg-gradient-to-br from-[#F25C23] to-[#D94A18] rounded-xl flex items-center justify-center">
                   <span className="text-white font-bold text-xl">S</span>
                 </div>
@@ -363,35 +363,90 @@ export default function Layout({ children, currentPageName }) {
                       <div className="px-3 py-2 border-b">
                         <p className="font-medium text-gray-900">{user?.profile?.firstName} {user?.profile?.lastName}</p>
                         <p className="text-xs text-gray-500">{user?.email}</p>
+                        <p className="text-xs text-[#F25C23] font-medium capitalize mt-1">{user?.role}</p>
                       </div>
-                      <DropdownMenuItem asChild>
-                        <Link to={createPageUrl("Orders")} className="flex items-center">
-                          <Clock className="w-4 h-4 mr-2" />
-                          My Orders
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to={createPageUrl("Favorites")} className="flex items-center">
-                          <Heart className="w-4 h-4 mr-2" />
-                          Favorites
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link to={createPageUrl("Addresses")} className="flex items-center">
-                          <MapPin className="w-4 h-4 mr-2" />
-                          Addresses
-                        </Link>
-                      </DropdownMenuItem>
-                      {/* Help & Support - Only for customers */}
+
+                      {/* Customer menu items */}
                       {user.role === 'customer' && (
-                        <DropdownMenuItem asChild>
-                          <Link to={createPageUrl("Support")} className="flex items-center">
-                            <HelpCircle className="w-4 h-4 mr-2" />
-                            Help & Support
-                          </Link>
-                        </DropdownMenuItem>
+                        <>
+                          <DropdownMenuItem asChild>
+                            <Link to={createPageUrl("Orders")} className="flex items-center">
+                              <Clock className="w-4 h-4 mr-2" />
+                              My Orders
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link to={createPageUrl("Favorites")} className="flex items-center">
+                              <Heart className="w-4 h-4 mr-2" />
+                              Favorites
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link to={createPageUrl("Addresses")} className="flex items-center">
+                              <MapPin className="w-4 h-4 mr-2" />
+                              Addresses
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link to={createPageUrl("Support")} className="flex items-center">
+                              <HelpCircle className="w-4 h-4 mr-2" />
+                              Help & Support
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
                       )}
+
+                      {/* Restaurant menu items */}
+                      {user.role === 'restaurant' && (
+                        <>
+                          <DropdownMenuItem asChild>
+                            <Link to="/restaurant/dashboard" className="flex items-center">
+                              <Store className="w-4 h-4 mr-2" />
+                              Dashboard
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link to="/restaurant/orders" className="flex items-center">
+                              <ShoppingCart className="w-4 h-4 mr-2" />
+                              Orders
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link to="/restaurant/support" className="flex items-center">
+                              <HelpCircle className="w-4 h-4 mr-2" />
+                              Support
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      )}
+
+                      {/* Driver menu items */}
+                      {user.role === 'driver' && (
+                        <>
+                          <DropdownMenuItem asChild>
+                            <Link to="/driver" className="flex items-center">
+                              <Truck className="w-4 h-4 mr-2" />
+                              Dashboard
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link to="/driver/deliveries" className="flex items-center">
+                              <ShoppingCart className="w-4 h-4 mr-2" />
+                              Deliveries
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link to="/driver/support" className="flex items-center">
+                              <HelpCircle className="w-4 h-4 mr-2" />
+                              Support
+                            </Link>
+                          </DropdownMenuItem>
+                        </>
+                      )}
+
                       <DropdownMenuSeparator />
+
+                      {/* Admin Panel Link */}
                       {user.role === 'admin' && (
                         <>
                           <DropdownMenuItem asChild>

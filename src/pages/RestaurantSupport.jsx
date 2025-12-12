@@ -90,9 +90,12 @@ export default function RestaurantSupport() {
 
     const { data: tickets = [], isLoading } = useQuery({
         queryKey: ['restaurant-support-tickets', user?.email],
-        queryFn: () => base44.entities.SupportTicket.filter({ customer_email: user.email }),
+        queryFn: () => base44.entities.SupportTicket.filter({
+            customer_email: user.email,
+            user_type: 'restaurant' // Only show restaurant's own tickets
+        }),
         enabled: !!user?.email,
-        staleTime: 30000,
+        staleTime: Infinity,
         refetchOnWindowFocus: false
     });
 

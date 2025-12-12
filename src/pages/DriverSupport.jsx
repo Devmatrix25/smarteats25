@@ -94,9 +94,12 @@ export default function DriverSupport() {
 
     const { data: tickets = [], isLoading } = useQuery({
         queryKey: ['driver-support-tickets', user?.email],
-        queryFn: () => base44.entities.SupportTicket.filter({ customer_email: user.email }),
+        queryFn: () => base44.entities.SupportTicket.filter({
+            customer_email: user.email,
+            user_type: 'driver' // Only show driver's own tickets
+        }),
         enabled: !!user?.email,
-        staleTime: 30000,
+        staleTime: Infinity,
         refetchOnWindowFocus: false
     });
 
