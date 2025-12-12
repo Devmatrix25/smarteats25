@@ -78,7 +78,7 @@ export default function Restaurant() {
     queryFn: () => base44.entities.Restaurant.filter({ id: restaurantId }),
     select: (data) => data[0],
     enabled: !!restaurantId,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
@@ -86,7 +86,7 @@ export default function Restaurant() {
     queryKey: ['menu', restaurantId],
     queryFn: () => base44.entities.MenuItem.filter({ restaurant_id: restaurantId }),
     enabled: !!restaurantId,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 

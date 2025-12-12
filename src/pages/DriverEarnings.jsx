@@ -82,7 +82,7 @@ export default function DriverEarnings() {
     queryKey: ['driver-orders-earnings', driver?.email],
     queryFn: () => base44.entities.Order.filter({ driver_email: driver.email, order_status: 'delivered' }),
     enabled: !!driver?.email,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
@@ -94,7 +94,7 @@ export default function DriverEarnings() {
       return drivers[0];
     },
     enabled: !!driver?.email,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
@@ -109,7 +109,7 @@ export default function DriverEarnings() {
     queryKey: ['all-drivers-leaderboard'],
     queryFn: () => base44.entities.Driver.filter({ status: 'approved' }),
     enabled: !!driver,
-    staleTime: 120000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 

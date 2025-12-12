@@ -37,7 +37,7 @@ export default function Restaurants() {
   const { data: restaurants = [], isLoading } = useQuery({
     queryKey: ['all-restaurants'],
     queryFn: () => base44.entities.Restaurant.filter({ status: 'approved' }),
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 

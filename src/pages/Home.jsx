@@ -46,7 +46,7 @@ export default function Home() {
       // Ensure we always return an array
       return Array.isArray(data) ? data : [];
     },
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
@@ -58,7 +58,7 @@ export default function Home() {
       return Array.isArray(data) ? data : [];
     },
     enabled: !!user?.email,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 

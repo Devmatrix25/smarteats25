@@ -66,7 +66,7 @@ export default function RestaurantDashboard() {
     queryKey: ['restaurant-orders', restaurant?.id],
     queryFn: () => base44.entities.Order.filter({ restaurant_id: restaurant.id }, '-created_date'),
     enabled: !!restaurant?.id,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
@@ -78,7 +78,7 @@ export default function RestaurantDashboard() {
       return restaurants[0];
     },
     enabled: !!restaurant?.id && restaurant?.status === 'pending',
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 

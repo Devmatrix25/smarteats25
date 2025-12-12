@@ -30,7 +30,7 @@ export default function DriverDashboard() {
     queryKey: ['driver-orders', driver?.email],
     queryFn: () => base44.entities.Order.filter({ driver_email: driver.email }, '-created_date'),
     enabled: !!driver?.email,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
@@ -41,7 +41,7 @@ export default function DriverDashboard() {
       return readyOrders.filter(o => !o.driver_email);
     },
     enabled: !!driver && driver.status === 'approved' && driver.is_online,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
@@ -52,7 +52,7 @@ export default function DriverDashboard() {
       return drivers[0];
     },
     enabled: !!driver?.email && driver?.status === 'pending',
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
@@ -213,33 +213,62 @@ export default function DriverDashboard() {
       return;
     }
 
+    let activeDriver = driver;
+
     // Check if driver has a valid ID (not temp)
     if (!driver.id || driver.id === 'flashman-temp') {
-      toast.error("Please wait while your driver profile loads...");
-      // Try to reload driver data
-      const drivers = await base44.entities.Driver.filter({ email: driver.email });
-      if (drivers.length > 0) {
-        setDriver(drivers[0]);
-        toast.info("Profile loaded! Try accepting again.");
-      } else {
-        toast.error("Driver profile not found. Please log out and log back in.");
+      toast.info("Setting up your driver profile...");
+
+      try {
+        // Try to find existing driver record
+        const drivers = await base44.entities.Driver.filter({ email: driver.email });
+
+        if (drivers.length > 0) {
+          activeDriver = drivers[0];
+          setDriver(activeDriver);
+        } else {
+          // Create new driver record for Flashman
+          const isFlashman = driver.email === 'flashman@smarteats.com';
+          const newDriver = await base44.entities.Driver.create({
+            name: isFlashman ? 'Flashman' : (driver.name || driver.email.split('@')[0]),
+            email: driver.email,
+            phone: isFlashman ? '+91 99999 88888' : '',
+            vehicle_type: 'Motorcycle',
+            vehicle_number: isFlashman ? 'KA-01-FL-0001' : '',
+            license_number: isFlashman ? 'DL-FLASH-2024' : '',
+            city: 'Bangalore',
+            status: isFlashman ? 'approved' : 'pending',
+            is_online: true,
+            is_available: true,
+            is_busy: false,
+            average_rating: isFlashman ? 4.9 : 0,
+            total_deliveries: 0,
+            total_earnings: 0
+          });
+          activeDriver = newDriver;
+          setDriver(newDriver);
+          toast.success("Driver profile created!");
+        }
+      } catch (e) {
+        console.error('Failed to setup driver:', e);
+        toast.error("Failed to setup driver profile. Please refresh the page.");
+        return;
       }
-      return;
     }
 
     try {
       // Mark driver as busy FIRST to prevent race conditions
-      await base44.entities.Driver.update(driver.id, { is_busy: true });
+      await base44.entities.Driver.update(activeDriver.id, { is_busy: true });
 
       // Update order with driver info
       await base44.entities.Order.update(order.id, {
-        driver_email: driver.email,
-        driver_name: driver.name,
-        driver_id: driver.id,
+        driver_email: activeDriver.email,
+        driver_name: activeDriver.name,
+        driver_id: activeDriver.id,
         order_status: 'picked_up'
       });
 
-      setDriver({ ...driver, is_busy: true });
+      setDriver({ ...activeDriver, is_busy: true });
       toast.success("🎉 Delivery accepted! Head to the restaurant for pickup.");
       refetch();
       refetchAvailable();
@@ -247,7 +276,7 @@ export default function DriverDashboard() {
       console.error('Accept delivery error:', e);
       // Revert driver status on error
       try {
-        await base44.entities.Driver.update(driver.id, { is_busy: false });
+        await base44.entities.Driver.update(activeDriver.id, { is_busy: false });
       } catch (revertError) {
         console.error('Failed to revert status:', revertError);
       }

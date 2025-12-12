@@ -96,7 +96,7 @@ export default function AdminOrders() {
     queryKey: ['admin-orders'],
     queryFn: () => base44.entities.Order.list('-created_date', 200),
     enabled: !!user,
-    staleTime: 30000 // Cache for 30 seconds
+    staleTime: Infinity,
   });
 
   const filteredOrders = orders.filter(order => {

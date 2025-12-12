@@ -92,7 +92,7 @@ export default function Support() {
         queryKey: ['support-tickets', user?.email],
         queryFn: () => base44.entities.SupportTicket.filter({ customer_email: user.email }),
         enabled: !!user?.email,
-        staleTime: 30000,
+        staleTime: Infinity,
         refetchOnWindowFocus: false
     });
 
@@ -100,7 +100,7 @@ export default function Support() {
         queryKey: ['user-orders-support', user?.email],
         queryFn: () => base44.entities.Order.filter({ customer_email: user.email }),
         enabled: !!user?.email,
-        staleTime: 60000
+        staleTime: Infinity
     });
 
     // AI Analysis function

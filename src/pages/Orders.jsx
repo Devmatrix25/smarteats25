@@ -69,7 +69,7 @@ export default function Orders() {
     queryKey: ['orders', user?.email],
     queryFn: () => base44.entities.Order.filter({ customer_email: user.email }, '-created_date'),
     enabled: !!user?.email,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 

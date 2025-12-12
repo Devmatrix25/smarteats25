@@ -148,7 +148,7 @@ export default function DriverDeliveries() {
     queryKey: ['driver-deliveries', driver?.email],
     queryFn: () => base44.entities.Order.filter({ driver_email: driver.email }, '-created_date'),
     enabled: !!driver?.email,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 

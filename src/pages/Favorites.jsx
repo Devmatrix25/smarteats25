@@ -39,7 +39,7 @@ export default function Favorites() {
     queryKey: ['favorites', user?.email],
     queryFn: () => base44.entities.Favorite.filter({ user_email: user.email }),
     enabled: !!user?.email,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
@@ -48,7 +48,7 @@ export default function Favorites() {
     queryKey: ['all-restaurants'],
     queryFn: () => base44.entities.Restaurant.filter({ status: 'approved' }),
     enabled: !!user?.email,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 

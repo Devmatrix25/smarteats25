@@ -74,7 +74,7 @@ export default function AdminSupport() {
         queryKey: ['admin-support-tickets'],
         queryFn: () => base44.entities.SupportTicket.list('-created_date', 100),
         enabled: !!user,
-        staleTime: 30000,
+        staleTime: Infinity,
         refetchOnWindowFocus: false
     });
 

@@ -50,7 +50,7 @@ export default function AdminDashboard() {
     queryKey: ['admin-restaurants'],
     queryFn: () => base44.entities.Restaurant.list(),
     enabled: !!user,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
@@ -58,7 +58,7 @@ export default function AdminDashboard() {
     queryKey: ['admin-drivers'],
     queryFn: () => base44.entities.Driver.list(),
     enabled: !!user,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
@@ -66,7 +66,7 @@ export default function AdminDashboard() {
     queryKey: ['admin-orders'],
     queryFn: () => base44.entities.Order.list('-created_date', 100),
     enabled: !!user,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 

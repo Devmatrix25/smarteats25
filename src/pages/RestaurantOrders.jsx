@@ -79,7 +79,7 @@ export default function RestaurantOrders() {
     queryKey: ['restaurant-orders', restaurant?.id],
     queryFn: () => base44.entities.Order.filter({ restaurant_id: restaurant.id }, '-created_date'),
     enabled: !!restaurant?.id,
-    staleTime: 30000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 

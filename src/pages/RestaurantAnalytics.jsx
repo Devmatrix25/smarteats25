@@ -59,7 +59,7 @@ export default function RestaurantAnalytics() {
     queryKey: ['restaurant-analytics', restaurant?.id],
     queryFn: () => base44.entities.Order.filter({ restaurant_id: restaurant.id }),
     enabled: !!restaurant?.id,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
@@ -67,7 +67,7 @@ export default function RestaurantAnalytics() {
     queryKey: ['restaurant-reviews', restaurant?.id],
     queryFn: () => base44.entities.Review.filter({ restaurant_id: restaurant.id }),
     enabled: !!restaurant?.id,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
@@ -75,7 +75,7 @@ export default function RestaurantAnalytics() {
     queryKey: ['restaurant-menu-analytics', restaurant?.id],
     queryFn: () => base44.entities.MenuItem.filter({ restaurant_id: restaurant.id }),
     enabled: !!restaurant?.id,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 

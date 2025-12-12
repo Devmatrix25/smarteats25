@@ -127,7 +127,7 @@ export default function RestaurantMenu() {
     queryKey: ['menu-items', restaurant?.id],
     queryFn: () => base44.entities.MenuItem.filter({ restaurant_id: restaurant.id }),
     enabled: !!restaurant?.id,
-    staleTime: 60000,
+    staleTime: Infinity,
     refetchOnWindowFocus: false
   });
 
