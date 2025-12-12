@@ -56,8 +56,9 @@ export default function DriverEarnings() {
   const { data: orders = [], isLoading, refetch } = useQuery({
     queryKey: ['driver-orders-earnings', driver?.email],
     queryFn: () => base44.entities.Order.filter({ driver_email: driver.email, order_status: 'delivered' }),
-    enabled: !!driver?.email,
-    refetchInterval: 3000 // Real-time updates every 3 seconds
+    enabled: !!driver?.email && driver?.id !== 'flashman-temp',
+    staleTime: Infinity,
+    refetchOnWindowFocus: false
   });
 
   // Also refresh driver data for real-time earnings
@@ -65,10 +66,11 @@ export default function DriverEarnings() {
     queryKey: ['driver-data-earnings', driver?.id],
     queryFn: async () => {
       const drivers = await base44.entities.Driver.filter({ email: driver.email });
-      return drivers[0];
+      return drivers[0] || null; // Return null instead of undefined
     },
-    enabled: !!driver?.email,
-    refetchInterval: 3000
+    enabled: !!driver?.email && driver?.id !== 'flashman-temp',
+    staleTime: Infinity,
+    refetchOnWindowFocus: false
   });
 
   // Update driver state when data changes
