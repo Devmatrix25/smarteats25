@@ -114,15 +114,21 @@ export default function FlavorLens() {
       // Get menu context for recommendations
       const menuContext = menuItems.slice(0, 20).map(m => m.name).join(", ");
 
-      // Call Gemini Vision API
-      const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{
-            parts: [
-              {
-                text: `Analyze this dish. If not food, set is_food:false. If food, respond with JSON:
+      // Call Gemini Vision API with retry logic
+      const maxRetries = 3;
+      let response;
+      let lastError;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [
+                  {
+                    text: `Analyze this dish. If not food, set is_food:false. If food, respond with JSON:
 
 If this is NOT a food image, respond with JSON: {"is_food": false, "identified_dish": "Not food", "description": "Please upload a food image"}
 
@@ -138,24 +144,47 @@ If this IS food, respond with JSON:
 Available menu items for reference: ${menuContext}
 
 Respond with ONLY valid JSON, no markdown or explanation.`
-              },
-              {
-                inline_data: {
-                  mime_type: selectedImage.type || "image/jpeg",
-                  data: base64Data
-                }
+                  },
+                  {
+                    inline_data: {
+                      mime_type: selectedImage.type || "image/jpeg",
+                      data: base64Data
+                    }
+                  }
+                ]
+              }],
+              generationConfig: {
+                temperature: 0.3,
+                maxOutputTokens: 512
               }
-            ]
-          }],
-          generationConfig: {
-            temperature: 0.3,
-            maxOutputTokens: 512
-          }
-        })
-      });
+            })
+          });
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+          if (response.ok) {
+            break; // Success, exit retry loop
+          }
+
+          // If 503 or 429, retry after delay
+          if ((response.status === 503 || response.status === 429) && attempt < maxRetries) {
+            const delay = attempt * 2000; // 2s, 4s, 6s
+            console.log(`API returned ${response.status}, retrying in ${delay / 1000}s... (attempt ${attempt}/${maxRetries})`);
+            await new Promise(r => setTimeout(r, delay));
+            continue;
+          }
+
+          lastError = new Error(`API error: ${response.status}`);
+        } catch (fetchError) {
+          lastError = fetchError;
+          if (attempt < maxRetries) {
+            const delay = attempt * 2000;
+            console.log(`Fetch error, retrying in ${delay / 1000}s... (attempt ${attempt}/${maxRetries})`);
+            await new Promise(r => setTimeout(r, delay));
+          }
+        }
+      }
+
+      if (!response || !response.ok) {
+        throw lastError || new Error('API request failed after retries');
       }
 
       const data = await response.json();
