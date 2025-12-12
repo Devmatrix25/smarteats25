@@ -321,7 +321,7 @@ async function sendOTPEmail(toEmail, otp) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: process.env.EMAIL_FROM || 'SmartEats <onboarding@resend.dev>',
+          from: 'SmartEats <onboarding@resend.dev>', // Free tier - no domain verification needed
           to: [toEmail],
           subject: '🔐 Your SmartEats Login OTP',
           html: emailHtml,
