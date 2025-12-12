@@ -163,15 +163,45 @@ Respond with ONLY valid JSON, no markdown or explanation.`
 
       if (!text) throw new Error("No AI response");
 
-      // Parse JSON (handle markdown code blocks)
+      // Parse JSON (handle markdown code blocks and malformed responses)
       let jsonStr = text.trim();
+
+      // Try to extract JSON from code blocks first
       if (jsonStr.includes('```json')) {
         jsonStr = jsonStr.split('```json')[1].split('```')[0].trim();
       } else if (jsonStr.includes('```')) {
         jsonStr = jsonStr.split('```')[1].split('```')[0].trim();
       }
 
-      const analysis = JSON.parse(jsonStr);
+      // Try to extract JSON object using regex if parsing fails
+      let analysis;
+      try {
+        analysis = JSON.parse(jsonStr);
+      } catch (parseError) {
+        // Try to find JSON object pattern in the response
+        const jsonMatch = text.match(/\{[\s\S]*?"is_food"[\s\S]*?\}/);
+        if (jsonMatch) {
+          try {
+            analysis = JSON.parse(jsonMatch[0]);
+          } catch (e) {
+            // Manual extraction as last resort
+            const isFood = text.toLowerCase().includes('"is_food": true') || text.toLowerCase().includes('"is_food":true');
+            const dishMatch = text.match(/"identified_dish"\s*:\s*"([^"]+)"/);
+            const cuisineMatch = text.match(/"cuisine_type"\s*:\s*"([^"]+)"/);
+            const descMatch = text.match(/"description"\s*:\s*"([^"]+)"/);
+
+            analysis = {
+              is_food: isFood,
+              identified_dish: dishMatch ? dishMatch[1] : "Unknown Dish",
+              cuisine_type: cuisineMatch ? cuisineMatch[1] : "International",
+              description: descMatch ? descMatch[1] : "A delicious looking dish",
+              confidence: "medium"
+            };
+          }
+        } else {
+          throw new Error("Could not parse AI response");
+        }
+      }
 
       if (!analysis.is_food) {
         setError("This doesn't appear to be food. Please upload a photo of actual food!");
