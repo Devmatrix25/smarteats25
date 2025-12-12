@@ -77,8 +77,10 @@ export default function AdminDrivers() {
       }
     },
     enabled: !!user,
-    staleTime: 30000,
-    refetchOnWindowFocus: false
+    staleTime: Infinity, // Never auto-refetch, use manual refresh button
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   const updateMutation = useMutation({

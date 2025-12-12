@@ -33,6 +33,33 @@ export default function DriverLogin() {
                 return;
             }
 
+            // Check driver approval status
+            const { base44 } = await import('../api/base44Client');
+            const drivers = await base44.entities.Driver.filter({ email: user.email });
+
+            if (drivers.length > 0) {
+                const driverStatus = drivers[0].status;
+
+                if (driverStatus === 'pending') {
+                    setError('Your application is under review. Please wait for admin approval. This usually takes 24-48 hours.');
+                    setLoading(false);
+                    // Log them out since they can't access the dashboard yet
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                    localStorage.removeItem('smarteats_current_user');
+                    return;
+                }
+
+                if (driverStatus === 'rejected' || driverStatus === 'suspended') {
+                    setError('Your driver application has been rejected or suspended. Please contact support.');
+                    setLoading(false);
+                    localStorage.removeItem('accessToken');
+                    localStorage.removeItem('refreshToken');
+                    localStorage.removeItem('smarteats_current_user');
+                    return;
+                }
+            }
+
             toast.success('Welcome back! 🚀', {
                 description: 'Redirecting to your dashboard...',
                 duration: 3000
