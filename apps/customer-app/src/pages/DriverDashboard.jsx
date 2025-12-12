@@ -164,6 +164,14 @@ export default function DriverDashboard() {
 
   const toggleOnline = async () => {
     if (!driver) return;
+    
+    // For fallback drivers, update locally only
+    if (isFallbackDriver) {
+      setDriver({ ...driver, is_online: !driver.is_online });
+      toast.success(driver.is_online ? "You're now offline" : "You're now online");
+      return;
+    }
+    
     try {
       await base44.entities.Driver.update(driver.id, { is_online: !driver.is_online });
       setDriver({ ...driver, is_online: !driver.is_online });
@@ -175,6 +183,19 @@ export default function DriverDashboard() {
 
   const updateAvailability = async (status) => {
     if (!driver) return;
+    
+    // For fallback drivers, update locally only
+    if (isFallbackDriver) {
+      setDriver({ ...driver, availability_status: status });
+      const messages = {
+        available: "You're now available for deliveries",
+        on_break: "Taking a break - you won't receive new orders",
+        unavailable: "You're now unavailable"
+      };
+      toast.success(messages[status]);
+      return;
+    }
+    
     try {
       await base44.entities.Driver.update(driver.id, { availability_status: status });
       setDriver({ ...driver, availability_status: status });
@@ -195,6 +216,13 @@ export default function DriverDashboard() {
   };
 
   const acceptDelivery = async (order) => {
+    // For fallback drivers with mock orders, simulate acceptance
+    if (isFallbackDriver) {
+      setDriver({ ...driver, is_busy: true });
+      toast.success("🎉 Delivery accepted! Go to Deliveries to start.");
+      return;
+    }
+    
     try {
       await base44.entities.Order.update(order.id, {
         driver_email: driver.email,
@@ -212,6 +240,51 @@ export default function DriverDashboard() {
       toast.error("Failed to accept delivery");
     }
   };
+
+  // Generate mock available orders for Flashman demo
+  const getMockAvailableOrders = () => {
+    if (!isFallbackDriver) return [];
+    
+    return [
+      {
+        id: 'mock-avail-1',
+        order_number: 'ORD-AV001',
+        restaurant_name: 'Wok Station',
+        customer_name: 'Rahul Kumar',
+        delivery_address: '789 Koramangala, Bangalore',
+        items: [{ name: 'Hakka Noodles', quantity: 1 }, { name: 'Manchurian', quantity: 1 }],
+        total_amount: 420,
+        order_status: 'ready',
+        created_date: new Date().toISOString()
+      },
+      {
+        id: 'mock-avail-2',
+        order_number: 'ORD-AV002',
+        restaurant_name: 'Burger Barn',
+        customer_name: 'Priya Singh',
+        delivery_address: '321 HSR Layout, Bangalore',
+        items: [{ name: 'Classic Burger', quantity: 2 }, { name: 'Fries', quantity: 2 }],
+        total_amount: 580,
+        order_status: 'ready',
+        created_date: new Date(Date.now() - 600000).toISOString()
+      },
+      {
+        id: 'mock-avail-3',
+        order_number: 'ORD-AV003',
+        restaurant_name: 'Dosa Corner',
+        customer_name: 'Amit Kumar',
+        delivery_address: 'BTM Layout 2nd Stage, Bangalore',
+        items: [{ name: 'Masala Dosa', quantity: 2 }, { name: 'Filter Coffee', quantity: 2 }],
+        total_amount: 320,
+        order_status: 'ready',
+        created_date: new Date(Date.now() - 1200000).toISOString()
+      }
+    ];
+  };
+
+  // Use mock orders for fallback driver
+  const ordersToShow = isFallbackDriver ? [] : orders;
+  const availableOrdersToShow = isFallbackDriver ? getMockAvailableOrders() : availableOrders;
 
   const todayDeliveries = orders.filter(o => {
     const today = new Date().toDateString();
@@ -465,9 +538,9 @@ export default function DriverDashboard() {
         )}
 
         {/* Order Batching - Smart grouping for multiple orders */}
-        {driver.is_online && !activeDelivery && driver.availability_status !== 'on_break' && availableOrders.length > 0 && (
+        {driver.is_online && !activeDelivery && driver.availability_status !== 'on_break' && availableOrdersToShow.length > 0 && (
           <OrderBatching 
-            orders={availableOrders}
+            orders={availableOrdersToShow}
             driver={driver}
             onAcceptBatch={handleBatchAccept}
             onAcceptSingle={acceptDelivery}
@@ -475,7 +548,7 @@ export default function DriverDashboard() {
         )}
 
         {/* Available Orders - Simple view when batching not applicable */}
-        {driver.is_online && !activeDelivery && driver.availability_status !== 'on_break' && availableOrders.length === 0 && (
+        {driver.is_online && !activeDelivery && driver.availability_status !== 'on_break' && availableOrdersToShow.length === 0 && (
           <Card className="mb-8">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
