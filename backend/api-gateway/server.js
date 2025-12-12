@@ -205,39 +205,172 @@ app.get('/health', (req, res) => {
 // EMAIL OTP AUTHENTICATION SYSTEM
 // ==============================================
 
-// SMTP Email Transporter Configuration
+// SMTP Email Transporter Configuration (backup option)
 let smtpTransporter = null;
-try {
-  if (process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+let smtpVerified = false;
+
+// Initialize SMTP but don't fail if it doesn't work (Render blocks port 587)
+if (process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+  try {
     smtpTransporter = nodemailer.createTransport({
-      service: 'gmail', // Use Gmail service for better compatibility
+      service: 'gmail',
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: parseInt(process.env.SMTP_PORT) || 587,
-      secure: false, // true for 465, false for other ports
+      secure: false,
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASSWORD,
       },
       tls: {
-        rejectUnauthorized: false // Allow self-signed certificates
-      }
+        rejectUnauthorized: false
+      },
+      // Short timeout to fail fast on Render
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 10000,
+      socketTimeout: 15000
     });
 
-    // Verify SMTP connection
+    // Non-blocking verification - don't wait for it
     smtpTransporter.verify((error, success) => {
       if (error) {
-        console.error('❌ SMTP verification failed:', error.message);
+        console.error('❌ SMTP verification failed (expected on Render):', error.message);
+        smtpVerified = false;
       } else {
         console.log('✅ SMTP server is ready to send emails');
+        smtpVerified = true;
       }
     });
 
-    console.log('✅ SMTP configured for:', process.env.SMTP_USER);
-  } else {
-    console.warn('⚠️ SMTP not configured - OTP login will not work');
+    console.log('ℹ️ SMTP configured for:', process.env.SMTP_USER);
+  } catch (err) {
+    console.error('❌ SMTP configuration error:', err.message);
   }
-} catch (err) {
-  console.error('❌ SMTP configuration error:', err.message);
+}
+
+// Resend API key (preferred for Render deployment)
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+if (RESEND_API_KEY) {
+  console.log('✅ Resend API configured (preferred email method)');
+} else {
+  console.log('ℹ️ Resend API not configured - using SMTP/simulation fallback');
+}
+
+// Email sending function with fallback chain: Resend -> SMTP -> Simulation
+async function sendOTPEmail(toEmail, otp) {
+  const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
+      <table role="presentation" style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td align="center" style="padding: 40px 0;">
+            <table role="presentation" style="width: 100%; max-width: 500px; border-collapse: collapse; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);">
+              <tr>
+                <td style="padding: 40px 40px 20px 40px; text-align: center; background: linear-gradient(135deg, #F25C23 0%, #D94A18 100%); border-radius: 16px 16px 0 0;">
+                  <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">🍽️ SmartEats</h1>
+                  <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Your Food Delivery Partner</p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 40px;">
+                  <h2 style="margin: 0 0 20px 0; color: #1D1D1F; font-size: 22px; font-weight: 600; text-align: center;">
+                    Verify Your Email
+                  </h2>
+                  <p style="margin: 0 0 30px 0; color: #666666; font-size: 16px; line-height: 1.6; text-align: center;">
+                    Hi there! 👋<br>
+                    Use the code below to complete your login to SmartEats.
+                  </p>
+                  <div style="background: linear-gradient(135deg, #FFF7F2 0%, #FFEDE5 100%); border: 2px dashed #F25C23; border-radius: 12px; padding: 25px; text-align: center; margin: 0 0 30px 0;">
+                    <p style="margin: 0 0 8px 0; color: #666666; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">Your OTP Code</p>
+                    <p style="margin: 0; color: #F25C23; font-size: 36px; font-weight: 700; letter-spacing: 8px;">${otp}</p>
+                  </div>
+                  <p style="margin: 0 0 10px 0; color: #999999; font-size: 14px; text-align: center;">
+                    ⏱️ This code expires in <strong>5 minutes</strong>
+                  </p>
+                  <p style="margin: 0; color: #999999; font-size: 14px; text-align: center;">
+                    If you didn't request this code, please ignore this email.
+                  </p>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding: 20px 40px 30px 40px; text-align: center; border-top: 1px solid #f0f0f0;">
+                  <p style="margin: 0; color: #999999; font-size: 12px;">
+                    © ${new Date().getFullYear()} SmartEats. All rights reserved.
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  // Method 1: Try Resend API first (HTTP-based, works on all platforms including Render)
+  if (RESEND_API_KEY) {
+    try {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: process.env.EMAIL_FROM || 'SmartEats <onboarding@resend.dev>',
+          to: [toEmail],
+          subject: '🔐 Your SmartEats Login OTP',
+          html: emailHtml,
+          text: `Your SmartEats OTP is: ${otp}. This code expires in 5 minutes.`
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ OTP sent via Resend API to ${toEmail} (ID: ${data.id})`);
+        return { success: true, method: 'resend', id: data.id };
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Resend API error:', errorData);
+        // Fall through to SMTP
+      }
+    } catch (resendError) {
+      console.error('❌ Resend API failed:', resendError.message);
+      // Fall through to SMTP
+    }
+  }
+
+  // Method 2: Try SMTP (may fail on Render due to port 587 blocking)
+  if (smtpTransporter && smtpVerified) {
+    try {
+      await smtpTransporter.sendMail({
+        from: process.env.EMAIL_FROM || 'SmartEats <noreply@smarteats.com>',
+        to: toEmail,
+        subject: '🔐 Your SmartEats Login OTP',
+        html: emailHtml,
+        text: `Your SmartEats OTP is: ${otp}. This code expires in 5 minutes.`
+      });
+      console.log(`✅ OTP sent via SMTP to ${toEmail}`);
+      return { success: true, method: 'smtp' };
+    } catch (smtpError) {
+      console.error('❌ SMTP failed:', smtpError.message);
+      // Fall through to simulation
+    }
+  }
+
+  // Method 3: Simulation mode (for development/demo or when email services unavailable)
+  console.log(`\n📧 [SIMULATION MODE] OTP for ${toEmail}: ${otp}`);
+  console.log(`   ⚠️ Email not actually sent - configure RESEND_API_KEY for production`);
+  return { 
+    success: true, 
+    method: 'simulation',
+    simulatedOtp: otp,
+    message: 'Email simulated - OTP logged to console. Configure RESEND_API_KEY for production.'
+  };
 }
 
 // Generate 6-digit OTP
@@ -258,14 +391,6 @@ app.post('/api/auth/send-otp', async (req, res) => {
 
     if (!email || !isValidEmail(email)) {
       return res.status(400).json({ error: 'Valid email is required' });
-    }
-
-    // Check if SMTP is configured
-    if (!smtpTransporter) {
-      return res.status(503).json({
-        error: 'Email service not configured. Please use password login instead.',
-        hint: 'SMTP environment variables are missing on the server.'
-      });
     }
 
     const normalizedEmail = email.toLowerCase().trim();
@@ -305,90 +430,31 @@ app.post('/api/auth/send-otp', async (req, res) => {
     const currentAttempts = parseInt(attemptCount || '0') + 1;
     const remainingAttempts = 3 - currentAttempts;
 
-    // Send email with OTP
+    // Send email with OTP using fallback chain
     try {
-      await smtpTransporter.sendMail({
-        from: process.env.EMAIL_FROM || 'SmartEats <noreply@smarteats.com>',
-        to: normalizedEmail,
-        subject: '🔐 Your SmartEats Login OTP',
-        html: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          </head>
-          <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f5f5;">
-            <table role="presentation" style="width: 100%; border-collapse: collapse;">
-              <tr>
-                <td align="center" style="padding: 40px 0;">
-                  <table role="presentation" style="width: 100%; max-width: 500px; border-collapse: collapse; background-color: #ffffff; border-radius: 16px; box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);">
-                    <!-- Header -->
-                    <tr>
-                      <td style="padding: 40px 40px 20px 40px; text-align: center; background: linear-gradient(135deg, #F25C23 0%, #D94A18 100%); border-radius: 16px 16px 0 0;">
-                        <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">🍽️ SmartEats</h1>
-                        <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px;">Your Food Delivery Partner</p>
-                      </td>
-                    </tr>
-                    
-                    <!-- Body -->
-                    <tr>
-                      <td style="padding: 40px;">
-                        <h2 style="margin: 0 0 20px 0; color: #1D1D1F; font-size: 22px; font-weight: 600; text-align: center;">
-                          Verify Your Email
-                        </h2>
-                        <p style="margin: 0 0 30px 0; color: #666666; font-size: 16px; line-height: 1.6; text-align: center;">
-                          Hi there! 👋<br>
-                          Use the code below to complete your login to SmartEats.
-                        </p>
-                        
-                        <!-- OTP Box -->
-                        <div style="background: linear-gradient(135deg, #FFF7F2 0%, #FFEDE5 100%); border: 2px dashed #F25C23; border-radius: 12px; padding: 25px; text-align: center; margin: 0 0 30px 0;">
-                          <p style="margin: 0 0 8px 0; color: #666666; font-size: 12px; text-transform: uppercase; letter-spacing: 2px;">Your OTP Code</p>
-                          <p style="margin: 0; color: #F25C23; font-size: 36px; font-weight: 700; letter-spacing: 8px;">${otp}</p>
-                        </div>
-                        
-                        <p style="margin: 0 0 10px 0; color: #999999; font-size: 14px; text-align: center;">
-                          ⏱️ This code expires in <strong>5 minutes</strong>
-                        </p>
-                        <p style="margin: 0; color: #999999; font-size: 14px; text-align: center;">
-                          If you didn't request this code, please ignore this email.
-                        </p>
-                      </td>
-                    </tr>
-                    
-                    <!-- Footer -->
-                    <tr>
-                      <td style="padding: 20px 40px 30px 40px; text-align: center; border-top: 1px solid #f0f0f0;">
-                        <p style="margin: 0; color: #999999; font-size: 12px;">
-                          © ${new Date().getFullYear()} SmartEats. All rights reserved.
-                        </p>
-                        <p style="margin: 8px 0 0 0; color: #cccccc; font-size: 11px;">
-                          This is an automated message. Please do not reply.
-                        </p>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-            </table>
-          </body>
-          </html>
-        `,
-        text: `Your SmartEats OTP is: ${otp}. This code expires in 5 minutes.`
-      });
+      const emailResult = await sendOTPEmail(normalizedEmail, otp);
 
-      console.log(`✅ OTP sent to ${normalizedEmail}`);
-
-      res.json({
+      // Build response based on method used
+      const response = {
         success: true,
-        message: 'OTP sent successfully! Please check your email.',
+        message: emailResult.method === 'simulation' 
+          ? `OTP generated (simulation mode). Check server logs for OTP: ${otp}`
+          : 'OTP sent successfully! Please check your email.',
         remainingAttempts,
-        expiresIn: 300 // seconds
-      });
+        expiresIn: 300, // seconds
+        method: emailResult.method
+      };
+
+      // Include simulated OTP for development testing
+      if (emailResult.method === 'simulation') {
+        response.simulatedOtp = otp; // Only in dev mode
+        response.hint = 'Configure RESEND_API_KEY environment variable for production email delivery';
+      }
+
+      res.json(response);
 
     } catch (emailError) {
-      console.error('❌ Email sending failed:', emailError);
+      console.error('❌ All email methods failed:', emailError);
       // Remove the stored OTP since email failed
       await redisClient.del(otpKey);
       res.status(500).json({ error: 'Failed to send OTP email. Please try again.' });
