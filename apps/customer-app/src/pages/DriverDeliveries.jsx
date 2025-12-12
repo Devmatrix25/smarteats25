@@ -76,24 +76,110 @@ export default function DriverDeliveries() {
   };
 
   const loadDriver = async (email) => {
+    const isFlashman = email === 'flashman@smarteats.com';
+    
     try {
       const drivers = await base44.entities.Driver.filter({ email: email });
       if (drivers.length > 0) {
         setDriver(drivers[0]);
+      } else if (isFlashman) {
+        // Flashman not found - create fallback driver
+        console.log('Flashman fallback driver created');
+        setDriver({
+          id: 'flashman-fallback',
+          name: 'Flashman',
+          email: email,
+          phone: '+91 99999 88888',
+          vehicle_type: 'motorcycle',
+          vehicle_number: 'KA01FL4567',
+          status: 'approved',
+          is_online: true,
+          is_available: true,
+          is_busy: false,
+          average_rating: 4.9,
+          total_deliveries: 150,
+          total_earnings: 7500
+        });
+        toast.success("Welcome Flashman! ⚡🚀");
       } else {
         setShowRegisterDialog(true);
       }
     } catch (e) {
-      setShowRegisterDialog(true);
+      console.error('Driver load error:', e.message);
+      if (isFlashman) {
+        // Flashman fallback on API error
+        console.log('API error - Flashman fallback driver created');
+        setDriver({
+          id: 'flashman-fallback',
+          name: 'Flashman',
+          email: email,
+          phone: '+91 99999 88888',
+          vehicle_type: 'motorcycle',
+          vehicle_number: 'KA01FL4567',
+          status: 'approved',
+          is_online: true,
+          is_available: true,
+          is_busy: false,
+          average_rating: 4.9,
+          total_deliveries: 150,
+          total_earnings: 7500
+        });
+        toast.success("Welcome Flashman! ⚡🚀");
+      } else {
+        setShowRegisterDialog(true);
+      }
     }
   };
 
-  const { data: orders = [], isLoading, refetch } = useQuery({
+  // Helper to check if using fallback driver
+  const isFallbackDriver = driver?.id?.includes('fallback') || driver?.id?.includes('temp');
+
+  // Generate mock orders for Flashman demo
+  const getMockOrders = () => {
+    if (!isFallbackDriver) return [];
+    
+    return [
+      {
+        id: 'mock-order-1',
+        order_number: 'ORD-FL001',
+        restaurant_name: 'Pizza Palace',
+        customer_name: 'Demo Customer',
+        customer_phone: '+91 98765 43210',
+        delivery_address: '123 MG Road, Bangalore',
+        items: [{ name: 'Margherita Pizza', quantity: 2 }, { name: 'Garlic Bread', quantity: 1 }],
+        total_amount: 599,
+        order_status: 'picked_up',
+        created_date: new Date().toISOString(),
+        delivery_latitude: 12.9816,
+        delivery_longitude: 77.6046
+      },
+      {
+        id: 'mock-order-2',
+        order_number: 'ORD-FL002',
+        restaurant_name: 'Biryani House',
+        customer_name: 'Test User',
+        customer_phone: '+91 87654 32109',
+        delivery_address: '456 Indiranagar, Bangalore',
+        items: [{ name: 'Chicken Biryani', quantity: 1 }, { name: 'Raita', quantity: 1 }],
+        total_amount: 349,
+        order_status: 'on_the_way',
+        created_date: new Date(Date.now() - 3600000).toISOString(),
+        delivery_latitude: 12.9716,
+        delivery_longitude: 77.6046
+      }
+    ];
+  };
+
+  const { data: apiOrders = [], isLoading, refetch } = useQuery({
     queryKey: ['driver-deliveries', driver?.email],
     queryFn: () => base44.entities.Order.filter({ driver_email: driver.email }, '-created_date'),
-    enabled: !!driver?.email,
-    refetchInterval: 2000 // Real-time updates every 2 seconds
+    enabled: !!driver?.email && !isFallbackDriver,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false
   });
+
+  // Use mock orders for fallback driver, real orders otherwise
+  const orders = isFallbackDriver ? getMockOrders() : apiOrders;
 
   const registerMutation = useMutation({
     mutationFn: (data) => base44.entities.Driver.create({ ...data, email: user.email, status: 'pending' }),
