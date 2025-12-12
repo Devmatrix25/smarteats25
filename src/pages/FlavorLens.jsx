@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 // Gemini API configuration - Using Gemini 2.5 Flash
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyBd5cA3aztbQAuBlIiKBmGJFHuxggBX7VQ";
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyCySfRP4b-nNVsWYgqFKj9wB3SfDXYr82Q";
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent";
 
 export default function FlavorLens() {
