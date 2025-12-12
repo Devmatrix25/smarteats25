@@ -191,7 +191,7 @@ const optionalAuth = (req, res, next) => {
 app.get('/health', (req, res) => {
   res.json({
     status: 'healthy',
-    version: '2.3.0', // OTP Login + Separate Role Logins + Flashman fixes
+    version: '2.3.1', // Gmail SMTP fix with TLS and verification
     timestamp: new Date().toISOString(),
     mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
     services: {
@@ -210,6 +210,7 @@ let smtpTransporter = null;
 try {
   if (process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
     smtpTransporter = nodemailer.createTransport({
+      service: 'gmail', // Use Gmail service for better compatibility
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: parseInt(process.env.SMTP_PORT) || 587,
       secure: false, // true for 465, false for other ports
@@ -217,7 +218,20 @@ try {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASSWORD,
       },
+      tls: {
+        rejectUnauthorized: false // Allow self-signed certificates
+      }
     });
+
+    // Verify SMTP connection
+    smtpTransporter.verify((error, success) => {
+      if (error) {
+        console.error('❌ SMTP verification failed:', error.message);
+      } else {
+        console.log('✅ SMTP server is ready to send emails');
+      }
+    });
+
     console.log('✅ SMTP configured for:', process.env.SMTP_USER);
   } else {
     console.warn('⚠️ SMTP not configured - OTP login will not work');
