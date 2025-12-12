@@ -213,6 +213,20 @@ export default function DriverDashboard() {
       return;
     }
 
+    // Check if driver has a valid ID (not temp)
+    if (!driver.id || driver.id === 'flashman-temp') {
+      toast.error("Please wait while your driver profile loads...");
+      // Try to reload driver data
+      const drivers = await base44.entities.Driver.filter({ email: driver.email });
+      if (drivers.length > 0) {
+        setDriver(drivers[0]);
+        toast.info("Profile loaded! Try accepting again.");
+      } else {
+        toast.error("Driver profile not found. Please log out and log back in.");
+      }
+      return;
+    }
+
     try {
       // Mark driver as busy FIRST to prevent race conditions
       await base44.entities.Driver.update(driver.id, { is_busy: true });
@@ -230,8 +244,13 @@ export default function DriverDashboard() {
       refetch();
       refetchAvailable();
     } catch (e) {
+      console.error('Accept delivery error:', e);
       // Revert driver status on error
-      await base44.entities.Driver.update(driver.id, { is_busy: false });
+      try {
+        await base44.entities.Driver.update(driver.id, { is_busy: false });
+      } catch (revertError) {
+        console.error('Failed to revert status:', revertError);
+      }
       toast.error("Failed to accept delivery. Please try again.");
     }
   };

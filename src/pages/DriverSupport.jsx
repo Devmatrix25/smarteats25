@@ -63,14 +63,18 @@ export default function DriverSupport() {
         try {
             const isAuth = await base44.auth.isAuthenticated();
             if (!isAuth) {
-                navigate('/login');
+                navigate('/login/driver');
                 return;
             }
             const userData = await base44.auth.me();
 
             // Only drivers can access this page
             if (userData.role !== 'driver') {
-                navigate('/home');
+                // Redirect based on actual role
+                if (userData.role === 'customer') navigate('/home');
+                else if (userData.role === 'restaurant') navigate('/restaurant/dashboard');
+                else if (userData.role === 'admin') navigate('/admin');
+                else navigate('/');
                 return;
             }
 
@@ -82,7 +86,7 @@ export default function DriverSupport() {
                 setDriver(drivers[0]);
             }
         } catch (e) {
-            navigate('/login');
+            navigate('/login/driver');
         } finally {
             setIsAuthLoading(false);
         }

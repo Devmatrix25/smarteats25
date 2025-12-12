@@ -108,7 +108,9 @@ export default function DriverEarnings() {
   const { data: allDrivers = [] } = useQuery({
     queryKey: ['all-drivers-leaderboard'],
     queryFn: () => base44.entities.Driver.filter({ status: 'approved' }),
-    enabled: !!driver
+    enabled: !!driver,
+    staleTime: 120000,
+    refetchOnWindowFocus: false
   });
 
   // Calculate earnings based on period
