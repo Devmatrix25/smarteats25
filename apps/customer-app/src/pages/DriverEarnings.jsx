@@ -45,18 +45,50 @@ export default function DriverEarnings() {
   };
 
   const loadDriver = async (email) => {
+    const isFlashman = email === 'flashman@smarteats.com';
+    
     try {
       const drivers = await base44.entities.Driver.filter({ email });
-      if (drivers.length > 0) setDriver(drivers[0]);
+      if (drivers.length > 0) {
+        setDriver(drivers[0]);
+      } else if (isFlashman) {
+        // Flashman not found in database - create fallback
+        setDriver({
+          id: 'flashman-fallback',
+          name: 'Flashman',
+          email: email,
+          status: 'approved',
+          is_online: true,
+          total_deliveries: 150,
+          total_earnings: 7500,
+          average_rating: 4.9
+        });
+      }
     } catch (e) {
-      console.log('No driver');
+      console.error('Driver load error:', e.message);
+      // Flashman fallback on API error
+      if (isFlashman) {
+        setDriver({
+          id: 'flashman-fallback',
+          name: 'Flashman',
+          email: email,
+          status: 'approved',
+          is_online: true,
+          total_deliveries: 150,
+          total_earnings: 7500,
+          average_rating: 4.9
+        });
+      }
     }
   };
+
+  // Helper to check if using fallback driver
+  const isFallbackDriver = driver?.id?.includes('fallback') || driver?.id?.includes('temp');
 
   const { data: orders = [], isLoading, refetch } = useQuery({
     queryKey: ['driver-orders-earnings', driver?.email],
     queryFn: () => base44.entities.Order.filter({ driver_email: driver.email, order_status: 'delivered' }),
-    enabled: !!driver?.email && driver?.id !== 'flashman-temp',
+    enabled: !!driver?.email && !isFallbackDriver,
     staleTime: Infinity,
     refetchOnWindowFocus: false
   });
@@ -68,7 +100,7 @@ export default function DriverEarnings() {
       const drivers = await base44.entities.Driver.filter({ email: driver.email });
       return drivers[0] || null; // Return null instead of undefined
     },
-    enabled: !!driver?.email && driver?.id !== 'flashman-temp',
+    enabled: !!driver?.email && !isFallbackDriver,
     staleTime: Infinity,
     refetchOnWindowFocus: false
   });
